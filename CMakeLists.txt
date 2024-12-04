@@ -5,8 +5,8 @@ project(MoldLab3D)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Add source files
-file(GLOB_RECURSE SRC_FILES src/*.cpp)
+# Add source files (make sure glad.c is explicitly included)
+file(GLOB_RECURSE SRC_FILES src/*.cpp src/glad.c)
 
 # Include directories
 include_directories(include)
@@ -17,6 +17,5 @@ add_executable(MoldLab3D ${SRC_FILES})
 # Find and link libraries
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
-find_package(glm REQUIRED)
 
-target_link_libraries(MoldLab3D OpenGL::GL glfw glm)
+target_link_libraries(MoldLab3D OpenGL::GL glfw)
