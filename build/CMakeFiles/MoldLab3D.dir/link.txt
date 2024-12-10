@@ -1,1 +1,0 @@
-/Library/Developer/CommandLineTools/usr/bin/c++  -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/MoldLab3D.dir/src/glad.c.o CMakeFiles/MoldLab3D.dir/src/main.cpp.o -o MoldLab3D  -Wl,-rpath,/usr/local/lib -framework OpenGL /usr/local/lib/libglfw.3.4.dylib
