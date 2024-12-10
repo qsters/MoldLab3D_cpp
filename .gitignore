@@ -1,3 +1,4 @@
+
 # Prerequisites
 *.d
 
@@ -30,3 +31,9 @@
 *.exe
 *.out
 *.app
+# Build directory (CMake output)
+build/
+
+# CLion-specific files
+.idea/
+cmake-build-*/
