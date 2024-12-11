@@ -17,8 +17,7 @@ public:
 
     // Getters for Screen Dimensions
     std::pair<int,int> getScreenSize() const;
-    int getScreenWidth() const;
-    int getScreenHeight() const;
+
 
     static std::string LoadShaderSource(const std::string& filepath);
     static std::pair<std::string, std::string> LoadCombinedShaderSource(const std::string& filepath);
@@ -35,8 +34,13 @@ protected:
     virtual void render() = 0;
 
     // Utility methods for derived classes
-    int getWindowWidth() const;
-    int getWindowHeight() const;
+    int getScreenWidth() const;
+    int getScreenHeight() const;
+
+    float TimeSinceStart() const;
+    float DeltaTime() const;
+
+
 
 private:
     // Core initialization
@@ -50,6 +54,9 @@ private:
 
     // Timing
     float lastFrameTime;
+    float deltaTime;
+    float timeSinceStart;
+
 
 
     // Callback setup

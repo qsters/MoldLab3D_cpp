@@ -28,8 +28,10 @@ void GameEngine::run() {
     while (!glfwWindowShouldClose(window)) {
         // Calculate delta time
         float currentTime = static_cast<float>(glfwGetTime());
-        float deltaTime = currentTime - lastFrameTime;
+        deltaTime = currentTime - lastFrameTime;
         lastFrameTime = currentTime;
+
+        timeSinceStart += deltaTime;
 
         update(deltaTime);
         render();
@@ -140,14 +142,6 @@ void GameEngine::initGLFW() {
     glfwSwapInterval(1); // Enable V-Sync
 }
 
-int GameEngine::getWindowWidth() const {
-    return width;
-}
-
-int GameEngine::getWindowHeight() const {
-    return height;
-}
-
 void GameEngine::errorCallback(int error, const char* description) {
     std::cerr << "Error: " << description << std::endl;
 }
@@ -181,4 +175,12 @@ void GameEngine::CheckGLError(const std::string& context) {
         std::cerr << "OpenGL Error in " << context << ": " << errorString << " (" << error << ")" << std::endl;
         error = glGetError(); // Check for more errors
     }
+}
+
+float GameEngine::DeltaTime() const {
+    return deltaTime;
+}
+
+float GameEngine::TimeSinceStart() const {
+    return timeSinceStart;
 }
