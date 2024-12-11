@@ -14,59 +14,60 @@ typedef struct Vertex
 static const Vertex vertices[36] =
 {
     // Front face
-    { { -0.5f, -0.5f,  0.5f }, { 1.f, 0.f, 0.f } }, // Bottom-left
-    { {  0.5f, -0.5f,  0.5f }, { 0.f, 1.f, 0.f } }, // Bottom-right
-    { {  0.5f,  0.5f,  0.5f }, { 0.f, 0.f, 1.f } }, // Top-right
+    { { 0.0f, 0.0f, 1.0f }, { 1.f, 0.f, 0.f } }, // Bottom-left
+    { { 1.0f, 0.0f, 1.0f }, { 0.f, 1.f, 0.f } }, // Bottom-right
+    { { 1.0f, 1.0f, 1.0f }, { 0.f, 0.f, 1.f } }, // Top-right
 
-    { { -0.5f, -0.5f,  0.5f }, { 1.f, 0.f, 0.f } }, // Bottom-left
-    { {  0.5f,  0.5f,  0.5f }, { 0.f, 0.f, 1.f } }, // Top-right
-    { { -0.5f,  0.5f,  0.5f }, { 1.f, 1.f, 0.f } }, // Top-left
+    { { 0.0f, 0.0f, 1.0f }, { 1.f, 0.f, 0.f } }, // Bottom-left
+    { { 1.0f, 1.0f, 1.0f }, { 0.f, 0.f, 1.f } }, // Top-right
+    { { 0.0f, 1.0f, 1.0f }, { 1.f, 1.f, 0.f } }, // Top-left
 
     // Back face
-    { { -0.5f, -0.5f, -0.5f }, { 1.f, 0.f, 1.f } }, // Bottom-left
-    { {  0.5f, -0.5f, -0.5f }, { 0.f, 1.f, 1.f } }, // Bottom-right
-    { {  0.5f,  0.5f, -0.5f }, { 1.f, 1.f, 1.f } }, // Top-right
+    { { 0.0f, 0.0f, 0.0f }, { 1.f, 0.f, 1.f } }, // Bottom-left
+    { { 1.0f, 0.0f, 0.0f }, { 0.f, 1.f, 1.f } }, // Bottom-right
+    { { 1.0f, 1.0f, 0.0f }, { 1.f, 1.f, 1.f } }, // Top-right
 
-    { { -0.5f, -0.5f, -0.5f }, { 1.f, 0.f, 1.f } }, // Bottom-left
-    { {  0.5f,  0.5f, -0.5f }, { 1.f, 1.f, 1.f } }, // Top-right
-    { { -0.5f,  0.5f, -0.5f }, { 0.f, 0.f, 1.f } }, // Top-left
+    { { 0.0f, 0.0f, 0.0f }, { 1.f, 0.f, 1.f } }, // Bottom-left
+    { { 1.0f, 1.0f, 0.0f }, { 1.f, 1.f, 1.f } }, // Top-right
+    { { 0.0f, 1.0f, 0.0f }, { 0.f, 0.f, 1.f } }, // Top-left
 
     // Left face
-    { { -0.5f, -0.5f, -0.5f }, { 0.f, 1.f, 0.f } }, // Bottom-left
-    { { -0.5f, -0.5f,  0.5f }, { 1.f, 0.f, 0.f } }, // Bottom-right
-    { { -0.5f,  0.5f,  0.5f }, { 1.f, 1.f, 0.f } }, // Top-right
+    { { 0.0f, 0.0f, 0.0f }, { 0.f, 1.f, 0.f } }, // Bottom-left
+    { { 0.0f, 0.0f, 1.0f }, { 1.f, 0.f, 0.f } }, // Bottom-right
+    { { 0.0f, 1.0f, 1.0f }, { 1.f, 1.f, 0.f } }, // Top-right
 
-    { { -0.5f, -0.5f, -0.5f }, { 0.f, 1.f, 0.f } }, // Bottom-left
-    { { -0.5f,  0.5f,  0.5f }, { 1.f, 1.f, 0.f } }, // Top-right
-    { { -0.5f,  0.5f, -0.5f }, { 1.f, 0.f, 1.f } }, // Top-left
+    { { 0.0f, 0.0f, 0.0f }, { 0.f, 1.f, 0.f } }, // Bottom-left
+    { { 0.0f, 1.0f, 1.0f }, { 1.f, 1.f, 0.f } }, // Top-right
+    { { 0.0f, 1.0f, 0.0f }, { 1.f, 0.f, 1.f } }, // Top-left
 
     // Right face
-    { {  0.5f, -0.5f, -0.5f }, { 0.f, 0.f, 1.f } }, // Bottom-left
-    { {  0.5f, -0.5f,  0.5f }, { 0.f, 1.f, 0.f } }, // Bottom-right
-    { {  0.5f,  0.5f,  0.5f }, { 1.f, 0.f, 0.f } }, // Top-right
+    { { 1.0f, 0.0f, 0.0f }, { 0.f, 0.f, 1.f } }, // Bottom-left
+    { { 1.0f, 0.0f, 1.0f }, { 0.f, 1.f, 0.f } }, // Bottom-right
+    { { 1.0f, 1.0f, 1.0f }, { 1.f, 0.f, 0.f } }, // Top-right
 
-    { {  0.5f, -0.5f, -0.5f }, { 0.f, 0.f, 1.f } }, // Bottom-left
-    { {  0.5f,  0.5f,  0.5f }, { 1.f, 0.f, 0.f } }, // Top-right
-    { {  0.5f,  0.5f, -0.5f }, { 1.f, 1.f, 1.f } }, // Top-left
+    { { 1.0f, 0.0f, 0.0f }, { 0.f, 0.f, 1.f } }, // Bottom-left
+    { { 1.0f, 1.0f, 1.0f }, { 1.f, 0.f, 0.f } }, // Top-right
+    { { 1.0f, 1.0f, 0.0f }, { 1.f, 1.f, 1.f } }, // Top-left
 
     // Top face
-    { { -0.5f,  0.5f, -0.5f }, { 0.f, 0.f, 1.f } }, // Bottom-left
-    { {  0.5f,  0.5f, -0.5f }, { 1.f, 1.f, 0.f } }, // Bottom-right
-    { {  0.5f,  0.5f,  0.5f }, { 1.f, 0.f, 0.f } }, // Top-right
+    { { 0.0f, 1.0f, 0.0f }, { 0.f, 0.f, 1.f } }, // Bottom-left
+    { { 1.0f, 1.0f, 0.0f }, { 1.f, 1.f, 0.f } }, // Bottom-right
+    { { 1.0f, 1.0f, 1.0f }, { 1.f, 0.f, 0.f } }, // Top-right
 
-    { { -0.5f,  0.5f, -0.5f }, { 0.f, 0.f, 1.f } }, // Bottom-left
-    { {  0.5f,  0.5f,  0.5f }, { 1.f, 0.f, 0.f } }, // Top-right
-    { { -0.5f,  0.5f,  0.5f }, { 1.f, 1.f, 0.f } }, // Top-left
+    { { 0.0f, 1.0f, 0.0f }, { 0.f, 0.f, 1.f } }, // Bottom-left
+    { { 1.0f, 1.0f, 1.0f }, { 1.f, 0.f, 0.f } }, // Top-right
+    { { 0.0f, 1.0f, 1.0f }, { 1.f, 1.f, 0.f } }, // Top-left
 
     // Bottom face
-    { { -0.5f, -0.5f, -0.5f }, { 0.f, 1.f, 1.f } }, // Bottom-left
-    { {  0.5f, -0.5f, -0.5f }, { 0.f, 0.f, 1.f } }, // Bottom-right
-    { {  0.5f, -0.5f,  0.5f }, { 0.f, 1.f, 0.f } }, // Top-right
+    { { 0.0f, 0.0f, 0.0f }, { 0.f, 1.f, 1.f } }, // Bottom-left
+    { { 1.0f, 0.0f, 0.0f }, { 0.f, 0.f, 1.f } }, // Bottom-right
+    { { 1.0f, 0.0f, 1.0f }, { 0.f, 1.f, 0.f } }, // Top-right
 
-    { { -0.5f, -0.5f, -0.5f }, { 0.f, 1.f, 1.f } }, // Bottom-left
-    { {  0.5f, -0.5f,  0.5f }, { 0.f, 1.f, 0.f } }, // Top-right
-    { { -0.5f, -0.5f,  0.5f }, { 1.f, 0.f, 0.f } }  // Top-left
+    { { 0.0f, 0.0f, 0.0f }, { 0.f, 1.f, 1.f } }, // Bottom-left
+    { { 1.0f, 0.0f, 1.0f }, { 0.f, 1.f, 0.f } }, // Top-right
+    { { 0.0f, 0.0f, 1.0f }, { 1.f, 0.f, 0.f } }  // Top-left
 };
+
 
 MoldLabGame::MoldLabGame(int width, int height, const std::string& title)
     : GameEngine(width, height, title), triangle_vbo(0), triangle_vao(0), shaderProgram(0), mvp_uniform_location(0) {}
@@ -115,6 +116,16 @@ void MoldLabGame::start() {
     glEnableVertexAttribArray(color_attrib_location);
     glVertexAttribPointer(color_attrib_location, 3, GL_FLOAT, GL_FALSE,
                           sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, color)));
+
+
+    // **Initialize the voxel grid with 1's to stress test
+    for (int x = 0; x < GRID_SIZE; x++) {
+        for (int y = 0; y < GRID_SIZE; y++) {
+            for (int z = 0; z < GRID_SIZE; z++) {
+                voxelGrid[x][y][z] = 1.0f;
+            }
+        }
+    }
 }
 
 void MoldLabGame::update(float deltaTime) {
@@ -138,12 +149,15 @@ void MoldLabGame::render() {
     // Model transformation: no rotation, identity matrix
     mat4x4_identity(model_matrix);
 
-    float oscillator = sin(TimeSinceStart());
-    float oscillator2 = cos(TimeSinceStart());
+    // Calculate the center of the voxel grid dynamically
+    float grid_center = GRID_SIZE / 2.0f;
 
-    // View transformation: camera looking at the origin
-    vec3 eye = {oscillator, oscillator2, 2.0f};  // Camera position
-    vec3 center = {0.0f, 0.0f, 0.0f}; // Target position
+    // Oscillating camera position
+    float oscillator = sin(TimeSinceStart()) * GRID_SIZE;
+    float oscillator2 = cos(TimeSinceStart()) * GRID_SIZE;
+
+    vec3 eye = {oscillator + grid_center, oscillator2 + grid_center, grid_center * 4.0f};  // Camera position oscillates around the grid
+    vec3 center = {grid_center, grid_center, grid_center}; // Center of the voxel grid
     vec3 up = {0.0f, 1.0f, 0.0f};  // Up direction
     mat4x4_look_at(view_matrix, eye, center, up);
 
@@ -156,9 +170,24 @@ void MoldLabGame::render() {
 
     // Use the shader program and update the MVP uniform
     glUseProgram(shaderProgram);
-    glUniformMatrix4fv(static_cast<GLint>(mvp_uniform_location), 1, GL_FALSE, reinterpret_cast<const GLfloat *>(mvp_matrix));
+    // **Iterate through the voxel grid and render cubes**
+    for (int x = 0; x < GRID_SIZE; x++) {
+        for (int y = 0; y < GRID_SIZE; y++) {
+            for (int z = 0; z < GRID_SIZE; z++) {
+                if (voxelGrid[x][y][z] > 0.5f) { // Only render cubes for values > 0.5
+                    mat4x4 model_matrix;
+                    mat4x4_identity(model_matrix);
+                    mat4x4_translate(model_matrix, x, y, z);
 
-    // Bind the VAO and draw the triangle
-    glBindVertexArray(triangle_vao);
-    glDrawArrays(GL_TRIANGLES, 0,  sizeof(vertices) / sizeof(Vertex));
+                    mat4x4_mul(mvp_matrix, view_matrix, model_matrix);
+                    mat4x4_mul(mvp_matrix, projection_matrix, mvp_matrix);
+
+                    glUniformMatrix4fv(static_cast<GLint>(mvp_uniform_location), 1, GL_FALSE, reinterpret_cast<const GLfloat *>(mvp_matrix));
+
+                    glBindVertexArray(triangle_vao);
+                    glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices) / sizeof(Vertex));
+                }
+            }
+        }
+    }
 }

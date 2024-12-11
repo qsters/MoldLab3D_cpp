@@ -9,7 +9,7 @@ out vec3 v_Color;         // Output color passed to fragment shader
 void main()
 {
     gl_Position = u_MVP * vec4(a_Position, 1.0); // Transform position
-    v_Color = (a_Position + 0.5);                                // Pass color to fragment shader
+    v_Color = a_Position;                                // Pass color to fragment shader
 }
 
 #type fragment

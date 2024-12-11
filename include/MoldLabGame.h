@@ -17,6 +17,11 @@ private:
     GLuint triangle_vbo, triangle_vao;
     GLuint shaderProgram;
     GLuint mvp_uniform_location;
+
+    static constexpr int GRID_SIZE = 5;
+
+    float voxelGrid[GRID_SIZE][GRID_SIZE][GRID_SIZE];
+
 };
 
 #endif // MOLDLABGAME_H
