@@ -16,7 +16,11 @@ include_directories(C:/msys64/mingw64/include)
 link_directories(C:/msys64/mingw64/lib)
 
 # Executable target
-add_executable(MoldLab3D ${SRC_FILES})
+add_executable(MoldLab3D ${SRC_FILES}
+        include/GameEngine.h
+        include/MoldLabGame.h
+        src/MoldLabGame.cpp
+        src/GameEngine.cpp)
 
 # Find and link libraries
 find_package(OpenGL REQUIRED)
