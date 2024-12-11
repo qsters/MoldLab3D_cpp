@@ -3,10 +3,11 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <utility>
 
 
-GameEngine::GameEngine(int width, int height, const std::string& title)
-    : width(width), height(height), title(title), window(nullptr), lastFrameTime(0.0f) {
+GameEngine::GameEngine(const int width, const int height, std::string  title)
+    : window(nullptr), width(width), height(height), title(std::move(title)), lastFrameTime(0.0f), deltaTime(0.0f), timeSinceStart(0.0f) {
 
     init();
 }
@@ -100,14 +101,14 @@ std::pair<std::string, std::string> GameEngine::LoadCombinedShaderSource(const s
 GLuint GameEngine::CompileShader(const std::string& source, GLenum shader_type) {
     GLuint shader = glCreateShader(shader_type);
     const char* source_cstr = source.c_str();
-    glShaderSource(shader, 1, &source_cstr, NULL);
+    glShaderSource(shader, 1, &source_cstr, nullptr);
     glCompileShader(shader);
 
     GLint success;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
     if (!success) {
         char infoLog[512];
-        glGetShaderInfoLog(shader, 512, NULL, infoLog);
+        glGetShaderInfoLog(shader, 512, nullptr, infoLog);
         std::cerr << "Shader Compilation Error: " << infoLog << std::endl;
         exit(EXIT_FAILURE);
     }

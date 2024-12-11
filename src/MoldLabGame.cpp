@@ -109,12 +109,12 @@ void MoldLabGame::start() {
     // Configure position attribute
     glEnableVertexAttribArray(position_attrib_location);
     glVertexAttribPointer(position_attrib_location, 3, GL_FLOAT, GL_FALSE,
-                          sizeof(Vertex), (void*) offsetof(Vertex, position));
+                          sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, position)));
 
     // Configure color attribute
     glEnableVertexAttribArray(color_attrib_location);
     glVertexAttribPointer(color_attrib_location, 3, GL_FLOAT, GL_FALSE,
-                          sizeof(Vertex), (void*) offsetof(Vertex, color));
+                          sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, color)));
 }
 
 void MoldLabGame::update(float deltaTime) {
@@ -124,7 +124,7 @@ void MoldLabGame::update(float deltaTime) {
 void MoldLabGame::render() {
     // Handle window size and aspect ratio
     auto [window_width, window_height] = getScreenSize();
-    const float aspect_ratio = window_width / (float) window_height;
+    const float aspect_ratio = static_cast<float>(window_width) / static_cast<float>(window_height);
 
     glViewport(0, 0, window_width, window_height); // Update the viewport
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the screen and depth buffer
@@ -156,7 +156,7 @@ void MoldLabGame::render() {
 
     // Use the shader program and update the MVP uniform
     glUseProgram(shaderProgram);
-    glUniformMatrix4fv(mvp_uniform_location, 1, GL_FALSE, (const GLfloat*) mvp_matrix);
+    glUniformMatrix4fv(static_cast<GLint>(mvp_uniform_location), 1, GL_FALSE, reinterpret_cast<const GLfloat *>(mvp_matrix));
 
     // Bind the VAO and draw the triangle
     glBindVertexArray(triangle_vao);

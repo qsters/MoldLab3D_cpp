@@ -2,12 +2,11 @@
 #define MOLDLABGAME_H
 
 #include "GameEngine.h"
-#include <vector>
 
 class MoldLabGame : public GameEngine {
 public:
     MoldLabGame(int width, int height, const std::string& title);
-    ~MoldLabGame();
+    ~MoldLabGame() override;
 
 protected:
     void start() override;

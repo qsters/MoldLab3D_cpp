@@ -10,13 +10,13 @@
 // Abstract base class for game engines
 class GameEngine {
 public:
-    GameEngine(int width, int height, const std::string& title);
+    GameEngine(int width, int height, std::string  title);
     virtual ~GameEngine();
 
     void run(); // Main game loop
 
     // Getters for Screen Dimensions
-    std::pair<int,int> getScreenSize() const;
+    [[nodiscard]] std::pair<int,int> getScreenSize() const;
 
 
     static std::string LoadShaderSource(const std::string& filepath);
@@ -34,11 +34,11 @@ protected:
     virtual void render() = 0;
 
     // Utility methods for derived classes
-    int getScreenWidth() const;
-    int getScreenHeight() const;
+    [[nodiscard]] int getScreenWidth() const;
+    [[nodiscard]] int getScreenHeight() const;
 
-    float TimeSinceStart() const;
-    float DeltaTime() const;
+    [[nodiscard]] float TimeSinceStart() const;
+    [[nodiscard]] float DeltaTime() const;
 
 
 
