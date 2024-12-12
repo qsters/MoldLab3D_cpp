@@ -1,6 +1,6 @@
 #include "MoldLabGame.h"
 
 int main() {
-    MoldLabGame game(640, 480, "OpenGL Triangle");
+    MoldLabGame game(800, 800, "OpenGL Triangle");
     game.run();
 }

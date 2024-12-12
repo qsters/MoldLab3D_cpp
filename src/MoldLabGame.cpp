@@ -33,7 +33,6 @@ MoldLabGame::~MoldLabGame() {
 
 
 
-
 void MoldLabGame::start() {
     glGenBuffers(1, &triangleVbo);
     glBindBuffer(GL_ARRAY_BUFFER, triangleVbo);
@@ -96,7 +95,7 @@ void MoldLabGame::render() {
     glUseProgram(shaderProgram);
 
     if (screenSizeLocation != -1) {
-        glUniform2f(screenSizeLocation, static_cast<GLfloat>(windowWidth), static_cast<GLfloat>(windowHeight));
+        glUniform2f(static_cast<GLint>(screenSizeLocation), static_cast<GLfloat>(windowWidth), static_cast<GLfloat>(windowHeight));
     }
 
     // Draw the full-screen quad
