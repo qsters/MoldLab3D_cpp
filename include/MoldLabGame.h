@@ -16,9 +16,9 @@ protected:
 private:
     GLuint triangle_vbo, triangle_vao;
     GLuint shaderProgram;
-    GLuint mvp_uniform_location;
+    GLuint screenSizeLocation;
 
-    static constexpr int GRID_SIZE = 5;
+    static constexpr int GRID_SIZE = 1;
 
     float voxelGrid[GRID_SIZE][GRID_SIZE][GRID_SIZE];
 

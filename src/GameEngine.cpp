@@ -116,6 +116,26 @@ GLuint GameEngine::CompileShader(const std::string& source, GLenum shader_type) 
     return shader;
 }
 
+void GameEngine::CheckShaderCompilation(GLuint shader) {
+    GLint success;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        char infoLog[512];
+        glGetShaderInfoLog(shader, 512, nullptr, infoLog);
+        std::cerr << "ERROR::SHADER::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+}
+
+void GameEngine::CheckProgramLinking(GLuint program) {
+    GLint success;
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if (!success) {
+        char infoLog[512];
+        glGetProgramInfoLog(program, 512, nullptr, infoLog);
+        std::cerr << "ERROR::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+    }
+}
+
 
 void GameEngine::initGLFW() {
     glfwSetErrorCallback(errorCallback);

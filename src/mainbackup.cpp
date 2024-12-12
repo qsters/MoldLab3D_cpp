@@ -136,7 +136,7 @@ int main(void)
     glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_vertices), triangle_vertices, GL_STATIC_DRAW);
 
     // Load and compile shaders
-    auto [vertex_shader_code, fragment_shader_code] = load_combined_shader_source("shaders/simple_triangle.glsl");
+    auto [vertex_shader_code, fragment_shader_code] = load_combined_shader_source("shaders/cube_renderer.glsl");
 
 
     GLuint vertex_shader = compile_shader(vertex_shader_code, GL_VERTEX_SHADER);
