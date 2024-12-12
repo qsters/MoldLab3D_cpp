@@ -20,13 +20,13 @@ static const Vertex quadVertices[6] = {
 
 
 MoldLabGame::MoldLabGame(int width, int height, const std::string& title)
-    : GameEngine(width, height, title), triangle_vbo(0), triangle_vao(0), shaderProgram(0), screenSizeLocation(0),
+    : GameEngine(width, height, title), triangleVbo(0), triangleVao(0), shaderProgram(0), screenSizeLocation(0),
       voxelGrid{} {
 }
 
 MoldLabGame::~MoldLabGame() {
-    if (triangle_vbo) glDeleteBuffers(1, &triangle_vbo);
-    if (triangle_vao) glDeleteVertexArrays(1, &triangle_vao);
+    if (triangleVbo) glDeleteBuffers(1, &triangleVbo);
+    if (triangleVao) glDeleteVertexArrays(1, &triangleVao);
 
     std::cout << "Exiting..." << std::endl;
 }
@@ -35,23 +35,23 @@ MoldLabGame::~MoldLabGame() {
 
 
 void MoldLabGame::start() {
-    glGenBuffers(1, &triangle_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, triangle_vbo);
+    glGenBuffers(1, &triangleVbo);
+    glBindBuffer(GL_ARRAY_BUFFER, triangleVbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
 
     // Load and compile shaders
-    auto [vertex_shader_code, fragment_shader_code] = LoadCombinedShaderSource("shaders/quad_renderer.glsl");
+    auto [vertexShaderCode, fragmentShaderCode] = LoadCombinedShaderSource("shaders/quad_renderer.glsl");
 
-    GLuint vertex_shader = CompileShader(vertex_shader_code, GL_VERTEX_SHADER);
-    CheckShaderCompilation(vertex_shader);
+    GLuint vertexShader = CompileShader(vertexShaderCode, GL_VERTEX_SHADER);
+    CheckShaderCompilation(vertexShader);
 
-    GLuint fragment_shader = CompileShader(fragment_shader_code, GL_FRAGMENT_SHADER);
-    CheckShaderCompilation(fragment_shader);
+    GLuint fragmentShader = CompileShader(fragmentShaderCode, GL_FRAGMENT_SHADER);
+    CheckShaderCompilation(fragmentShader);
 
     // Link shaders into a program
     shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertex_shader);
-    glAttachShader(shaderProgram, fragment_shader);
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
 
     CheckProgramLinking(shaderProgram);
@@ -60,11 +60,11 @@ void MoldLabGame::start() {
     screenSizeLocation = glGetUniformLocation(shaderProgram, "screenSize");
     GLint positionAttributeLocation = glGetAttribLocation(shaderProgram, "position");
 
-    glGenVertexArrays(1, &triangle_vao);
-    glBindVertexArray(triangle_vao);
+    glGenVertexArrays(1, &triangleVao);
+    glBindVertexArray(triangleVao);
 
-    glGenBuffers(1, &triangle_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, triangle_vbo);
+    glGenBuffers(1, &triangleVbo);
+    glBindBuffer(GL_ARRAY_BUFFER, triangleVbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
 
     // Enable and set the position attribute
@@ -89,19 +89,17 @@ void MoldLabGame::update(float deltaTime) {
 
 void MoldLabGame::render() {
     // Handle window size and aspect ratio
-    auto [window_width, window_height] = getScreenSize();
-    const float aspect_ratio = static_cast<float>(window_width) / static_cast<float>(window_height);
+    auto [windowWidth, windowHeight] = getScreenSize();
 
-    glViewport(0, 0, window_width, window_height); // Update the viewport
     glClear(GL_COLOR_BUFFER_BIT); // Clear the screen and depth buffer
 
     glUseProgram(shaderProgram);
 
     if (screenSizeLocation != -1) {
-        glUniform2f(screenSizeLocation, static_cast<GLfloat>(window_width), static_cast<GLfloat>(window_height));
+        glUniform2f(screenSizeLocation, static_cast<GLfloat>(windowWidth), static_cast<GLfloat>(windowHeight));
     }
 
     // Draw the full-screen quad
-    glBindVertexArray(triangle_vao);
+    glBindVertexArray(triangleVao);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }

@@ -14,7 +14,7 @@ protected:
     void render() override;
 
 private:
-    GLuint triangle_vbo, triangle_vao;
+    GLuint triangleVbo, triangleVao;
     GLuint shaderProgram;
     GLuint screenSizeLocation;
 
