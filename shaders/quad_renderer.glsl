@@ -26,22 +26,31 @@ vec3 lightColor = vec3(1.0, 1.0, 1.0);    // Pure white light
 vec3 objectColor = vec3(0.0, 1.0, 0.2);   // Reddish object
 
 
-
-
 // Calculate the distance from a point to a cube centered at `c` with size `s`
-float distance_from_cube(in vec3 p, in vec3 c, float s) {
-    vec3 d = abs(p - c) - vec3(s);
+float distance_from_cube(in vec3 p, in vec3 c) {
+    vec3 d = abs(p - c) - vec3(1.0);
     return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0);
+}
+
+float smooth_min(float a, float b, float k) {
+    float h = max(k - abs(a - b), 0.0) / k;
+    return min(a, b) - h * h * k * 0.25;
+}
+
+float smooth_max(float a, float b, float k) {
+    float h = max(k - abs(a - b), 0.0) / k;
+    return max(a, b) + h * h * k * 0.25;
 }
 
 // Map function to define the scene
 float map_the_world(in vec3 p) {
     // Cube centered at (0.0, 0.0, 0.0) with size 1.0
-    float cube_0 = distance_from_cube(p, vec3(0.0), 1.0);
+    float cube_0 = distance_from_cube(p, vec3(0.0));
+    // Scale the space of cube_1 externally by dividing p
+    float scale_factor = 1.5; // Scaling factor
+    float cube_1 = distance_from_cube(p / scale_factor, vec3(-1.0)) * scale_factor;
 
-    // Add more objects here later...
-
-    return cube_0;
+    return smooth_min(cube_0, cube_1, 3.0);
 }
 
 // Calculate the normal at a point on the surface
@@ -57,13 +66,14 @@ vec3 calculate_normal(in vec3 p) {
 vec3 ray_march(in vec3 ro, in vec3 rd) {
     float total_distance_traveled = 0.0;
     const int NUMBER_OF_STEPS = 40;
-    const float MINIMUM_HIT_DISTANCE = 0.05;
+    const float MINIMUM_HIT_DISTANCE = 0.01;
     const float MAXIMUM_TRACE_DISTANCE = 50.0;
 
     for (int i = 0; i < NUMBER_OF_STEPS; ++i) {
         vec3 current_position = ro + total_distance_traveled * rd;
 
         float distance_to_closest = map_the_world(current_position);
+
 
         if (distance_to_closest < MINIMUM_HIT_DISTANCE) {
             // Calculate normal at the hit point

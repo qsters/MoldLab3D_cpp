@@ -84,9 +84,6 @@ void MoldLabGame::renderingStart() {
 
 void MoldLabGame::start() {
     cameraPosition[2] = -10.0;
-
-
-
     // **Initialize the voxel grid with 1's to stress test
     for (int x = 0; x < GRID_SIZE; x++) {
         for (int y = 0; y < GRID_SIZE; y++) {
