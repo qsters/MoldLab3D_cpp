@@ -4,6 +4,7 @@
 #include <linmath.h>
 
 #include "GameEngine.h"
+#include "ShaderVariable.h"
 
 class MoldLabGame : public GameEngine {
 public:
@@ -19,9 +20,8 @@ protected:
 private:
     GLuint triangleVbo, triangleVao;
     GLuint shaderProgram;
-    GLuint screenSizeLocation, cameraPositionLocation, focusPointLocation;
+    ShaderVariable<vec3> cameraPositionSV, focusPointSV;
 
-    vec3 cameraPosition, focusPoint;
 
     static constexpr int GRID_SIZE = 1;
 

@@ -25,7 +25,6 @@ vec3 lightPosition = vec3(2.0, 4.0, 2.0); // Light above and slightly to the sid
 vec3 lightColor = vec3(1.0, 1.0, 1.0);    // Pure white light
 vec3 objectColor = vec3(0.0, 1.0, 0.2);   // Reddish object
 
-
 // Calculate the distance from a point to a cube centered at `c` with size `s`
 float distance_from_cube(in vec3 p, in vec3 c) {
     vec3 d = abs(p - c) - vec3(1.0);
