@@ -3,6 +3,9 @@
 #include <linmath.h>
 #include <cmath>
 
+static bool isDPressed = false;
+static bool isAPressed = false;
+
 
 typedef struct Vertex {
     vec3 position; // 3D position of the vertex
@@ -25,11 +28,9 @@ void set_vec3(vec3 v, float x, float y, float z) {
     v[2] = z;
 }
 
-
-
 MoldLabGame::MoldLabGame(int width, int height, const std::string& title)
 : GameEngine(width, height, title), triangleVbo(0), triangleVao(0), shaderProgram(0), voxelGrid{} {
-
+    displayFramerate = true;
 }
 
 MoldLabGame::~MoldLabGame() {
@@ -63,11 +64,15 @@ void MoldLabGame::renderingStart() {
 
     static vec3 cameraPosition = {0.0f, 0.0f, 0.0f};
     static vec3 focusPoint = {0.0f, 0.0f, 0.0f};
+    static int gridSize = GRID_SIZE;
+    static float testValue = 1.0f;
 
     cameraPositionSV = ShaderVariable(shaderProgram, &cameraPosition, "cameraPosition");
     focusPointSV = ShaderVariable(shaderProgram, &focusPoint, "focusPoint");
+    gridSizeSV = ShaderVariable(shaderProgram, &gridSize, "gridSize");
+    testValueSV = ShaderVariable(shaderProgram, &testValue, "testValue");
 
- 
+
     GLint positionAttributeLocation = glGetAttribLocation(shaderProgram, "position");
 
 
@@ -87,7 +92,9 @@ void MoldLabGame::renderingStart() {
 
 
 void MoldLabGame::start() {
+    vec3& cameraPosition = *cameraPositionSV.value;
 
+    set_vec3(cameraPosition, GRID_SIZE * 3, GRID_SIZE * 2, GRID_SIZE * 5);
     // **Initialize the voxel grid with 1's to stress test
     for (int x = 0; x < GRID_SIZE; x++) {
         for (int y = 0; y < GRID_SIZE; y++) {
@@ -105,18 +112,53 @@ void MoldLabGame::update(float deltaTime) {
     // Update the angle
     angle += ROTATION_SPEED * deltaTime;
 
-    vec3& cameraPosition = *cameraPositionSV.value;
+    vec3& focusPoint = *focusPointSV.value;
 
-    // Compute new camera position in a circular path around the origin
-    float radius = 10.0f; // Distance from the origin
-    cameraPosition[0] = radius * cos(angle); // X-coordinate
-    cameraPosition[2] = radius * sin(angle); // Z-coordinate
-    cameraPosition[1] = 2.0f; // Keep Y-coordinate fixed
+    float gridCenter = (GRID_SIZE - 1.0f) * 0.5f; // Adjust for the centered cube positions
+    set_vec3(focusPoint, gridCenter, gridCenter, gridCenter);
 
-    // Optional: Reset angle to prevent overflow
-    if (angle > 2.0f * M_PI) {
-        angle -= 2.0f * M_PI;
+
+    float orbitRadius = GRID_SIZE * 2.0f; // Adjust this as needed for a suitable orbit radius
+
+    // Orbit speed (radians per second)
+    float orbitSpeed = 1.0f;
+
+    // Update the angle based on delta time
+    static float orbitAngle = 0.0f;
+    orbitAngle += orbitSpeed * deltaTime;
+
+    // Wrap the angle to avoid overflow
+    if (orbitAngle > 2.0f * M_PI) {
+        orbitAngle -= 2.0f * M_PI;
     }
+
+    // Compute new camera position
+    float cameraX = gridCenter + orbitRadius * cos(orbitAngle); // Circular orbit in the XZ plane
+    float cameraZ = gridCenter + orbitRadius * sin(orbitAngle);
+
+    // Set the camera position, keeping the y-value fixed
+    set_vec3(*cameraPositionSV.value, cameraX, gridCenter, cameraZ);
+
+    float testScaler = 1.5f;
+    // Adjust testValueSV based on key state
+    float& testValue = *testValueSV.value; // Assume `testValueSV` is already initialized
+
+    if (isDPressed) {
+        testValue += deltaTime * testScaler; // Change rate is 1.0 units per second
+        std::cout << "Test value: " << testValue << std::endl;
+    }
+    if (isAPressed) {
+        testValue -= deltaTime * testScaler; // Same rate but in the opposite direction
+        std::cout << "Test value: " << testValue << std::endl;
+    }
+
+    // // Compute new camera position in a circular path around the origin
+    // float radius = 10.0f; // Distance from the origin
+    // set_vec3(cameraPosition, radius * cos(angle), 2.0f, radius * sin(angle));
+    // // Optional: Reset angle to prevent overflow
+    // if (angle > 2.0f * M_PI) {
+    //     angle -= 2.0f * M_PI;
+    // }
 }
 
 void MoldLabGame::render() {
@@ -127,11 +169,31 @@ void MoldLabGame::render() {
 
     glUseProgram(shaderProgram);
 
-
+    gridSizeSV.uploadToShader();
     cameraPositionSV.uploadToShader();
+    // std::cout << *(cameraPositionSV.value)[0] << " " << *(cameraPositionSV.value)[1] << " " << *(cameraPositionSV.value)[2] << std::endl;
+
     focusPointSV.uploadToShader();
+    testValueSV.uploadToShader();
     
     // Draw the full-screen quad
     glBindVertexArray(triangleVao);
     glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+void MoldLabGame::onKeyCallback(int key, int scancode, int action, int mods) {
+    // Track key press/release state
+    if (key == GLFW_KEY_D) {
+        if (action == GLFW_PRESS)
+            isDPressed = true;
+        else if (action == GLFW_RELEASE)
+            isDPressed = false;
+    }
+
+    if (key == GLFW_KEY_A) {
+        if (action == GLFW_PRESS)
+            isAPressed = true;
+        else if (action == GLFW_RELEASE)
+            isAPressed = false;
+    }
 }

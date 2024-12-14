@@ -37,12 +37,16 @@ protected:
     virtual void update(float deltaTime) = 0;
     virtual void render() = 0;
 
+    virtual void onKeyCallback(int key, int scancode, int action, int mods) = 0;
+
     // Utility methods for derived classes
     [[nodiscard]] int getScreenWidth() const;
     [[nodiscard]] int getScreenHeight() const;
 
     [[nodiscard]] float TimeSinceStart() const;
     [[nodiscard]] float DeltaTime() const;
+
+    bool displayFramerate = false;
 
 
 

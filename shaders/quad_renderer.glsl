@@ -18,16 +18,25 @@ void main() {
 in vec2 uv;
 uniform vec3 cameraPosition;
 uniform vec3 focusPoint;
+uniform int gridSize;
+
+uniform float testValue;
 
 out vec4 fragmentColor;
 
-vec3 lightPosition = vec3(2.0, 4.0, 2.0); // Light above and slightly to the side
+vec3 lightPosition = vec3(-5, gridSize * 1.5f, -5); // Light above and slightly to the side
 vec3 lightColor = vec3(1.0, 1.0, 1.0);    // Pure white light
 vec3 objectColor = vec3(0.0, 1.0, 0.2);   // Reddish object
 
+float maxCubeSideLength = 0.9;
+
+vec3 gridMin = vec3(-1.0);                // Slightly below the grid's minimum
+vec3 gridMax = vec3(gridSize) + vec3(1.0); // Slightly above the grid's maximum
+
+
 // Calculate the distance from a point to a cube centered at `c` with size `s`
-float distance_from_cube(in vec3 p, in vec3 c) {
-    vec3 d = abs(p - c) - vec3(1.0);
+float distance_from_cube(in vec3 point, in vec3 center, in float sideLength) {
+    vec3 d = abs(point - center) - vec3(mix(0, maxCubeSideLength, sideLength) * 0.5f);
     return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0);
 }
 
@@ -42,22 +51,32 @@ float smooth_max(float a, float b, float k) {
 }
 
 // Map function to define the scene
-float map_the_world(in vec3 p) {
-    // Cube centered at (0.0, 0.0, 0.0) with size 1.0
-    float cube_0 = distance_from_cube(p, vec3(0.0));
-    // Scale the space of cube_1 externally by dividing p
-    float scale_factor = 1.5; // Scaling factor
-    float cube_1 = distance_from_cube(p / scale_factor, vec3(-1.0)) * scale_factor;
+float map_the_world(in vec3 point) {
+    float result = 1e6; // Start with a very large value (infinite distance)
+    float cubeSize = testValue; // Size of each cube
 
-    return smooth_min(cube_0, cube_1, 3.0);
+    for (int x = 0; x < gridSize; ++x) {
+        for (int y = 0; y < gridSize; ++y) {
+            for (int z = 0; z < gridSize; ++z) {
+                // Calculate the grid position
+                vec3 gridPoint = vec3(float(x), float(y), float(z));
+
+                // Calculate the distance to the cube at this grid point
+                float cube = distance_from_cube(point, gridPoint, cubeSize);
+
+                // Combine distances using smooth_min for blending
+                result = smooth_min(result, cube, 0.15);
+            }
+        }
+    }
+    return result; // Return the minimum distance for the scene
 }
-
 // Calculate the normal at a point on the surface
-vec3 calculate_normal(in vec3 p) {
+vec3 calculate_normal(in vec3 point) {
     const float EPSILON = 0.01;
-    float dx = map_the_world(p + vec3(EPSILON, 0.0, 0.0)) - map_the_world(p - vec3(EPSILON, 0.0, 0.0));
-    float dy = map_the_world(p + vec3(0.0, EPSILON, 0.0)) - map_the_world(p - vec3(0.0, EPSILON, 0.0));
-    float dz = map_the_world(p + vec3(0.0, 0.0, EPSILON)) - map_the_world(p - vec3(0.0, 0.0, EPSILON));
+    float dx = map_the_world(point + vec3(EPSILON, 0.0, 0.0)) - map_the_world(point - vec3(EPSILON, 0.0, 0.0));
+    float dy = map_the_world(point + vec3(0.0, EPSILON, 0.0)) - map_the_world(point - vec3(0.0, EPSILON, 0.0));
+    float dz = map_the_world(point + vec3(0.0, 0.0, EPSILON)) - map_the_world(point - vec3(0.0, 0.0, EPSILON));
     return normalize(vec3(dx, dy, dz));
 }
 
@@ -105,6 +124,17 @@ vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
     return vec3(0.0); // Background color (black)
 }
 
+bool intersectsAABB(vec3 rayOrigin, vec3 rayDirection, vec3 gridMin, vec3 gridMax) {
+
+    vec3 tMin = (gridMin - rayOrigin) / rayDirection;
+    vec3 tMax = (gridMax - rayOrigin) / rayDirection;
+    vec3 t1 = min(tMin, tMax);
+    vec3 t2 = max(tMin, tMax);
+    float tNear = max(max(t1.x, t1.y), t1.z);
+    float tFar = min(min(t2.x, t2.y), t2.z);
+    return tNear <= tFar && tFar >= 0.0;
+}
+
 void main() {
     // Calculate camera orientation
     vec3 forward = normalize(focusPoint - cameraPosition); // Forward direction
@@ -115,6 +145,12 @@ void main() {
     // Ray origin and direction
     vec3 rayOrigin = cameraPosition;
     vec3 rayDirection = normalize(uv.x * right + uv.y * up + forward); // Combine screen-space uv with camera orientation
+
+    // Cull rays that don't intersect the AABB
+//    if (!intersectsAABB(rayOrigin, rayDirection, gridMin, gridMax)) {
+//        fragmentColor = vec4(0.0, 0.0, 1.0, 0.0); // Background color
+//        return;
+//    }
 
     fragmentColor = vec4(ray_march(rayOrigin, rayDirection), 1.0);
 }

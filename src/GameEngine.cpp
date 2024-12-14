@@ -24,8 +24,11 @@ GameEngine::~GameEngine() {
 }
 
 void GameEngine::run() {
-    start();
     renderingStart();
+    start();
+
+    int frameCount = 0;
+    float frameTimeAccumulator = 0.0f;
 
     while (!glfwWindowShouldClose(window)) {
         // Calculate delta time
@@ -35,8 +38,22 @@ void GameEngine::run() {
 
         timeSinceStart += deltaTime;
 
+        frameCount++;
+        frameTimeAccumulator += deltaTime;
+
         update(deltaTime);
         render();
+
+        // print framerate
+        if (displayFramerate && frameTimeAccumulator >= 1.0f) {
+            float averageFrameRate = frameCount / frameTimeAccumulator;
+            std::cout << "Average Frame Rate: " << averageFrameRate << " FPS" << std::endl;
+
+            // Reset for the next second
+            frameCount = 0;
+            frameTimeAccumulator = 0.0f;
+        }
+
 
 
         // Swap buffers and poll events
@@ -156,6 +173,9 @@ void GameEngine::initGLFW() {
         exit(EXIT_FAILURE);
     }
 
+    // Set the user pointer to this instance
+    glfwSetWindowUserPointer(window, this);
+
     glfwSetKeyCallback(window, GameEngine::keyCallback);
 
     glfwMakeContextCurrent(window);
@@ -171,6 +191,15 @@ void GameEngine::errorCallback(int error, const char* description) {
 void GameEngine::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
         glfwSetWindowShouldClose(window, GLFW_TRUE); // Close window on Escape key
+
+    GameEngine* engine = static_cast<GameEngine*>(glfwGetWindowUserPointer(window));
+    if (!engine) {
+        std::cerr << "Error: Could not get a window user pointer" << std::endl;
+        return;
+    } // Ensure the engine instance is valid
+
+
+    engine->onKeyCallback(key, scancode, action, mods);
     // TODO Finish implementing an actual input manager
 }
 
