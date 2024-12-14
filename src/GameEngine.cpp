@@ -24,6 +24,7 @@ GameEngine::~GameEngine() {
 }
 
 void GameEngine::run() {
+    renderingStart();
     start();
 
     while (!glfwWindowShouldClose(window)) {

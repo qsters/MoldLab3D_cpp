@@ -1,6 +1,8 @@
 #ifndef MOLDLABGAME_H
 #define MOLDLABGAME_H
 
+#include <linmath.h>
+
 #include "GameEngine.h"
 
 class MoldLabGame : public GameEngine {
@@ -9,6 +11,7 @@ public:
     ~MoldLabGame() override;
 
 protected:
+    void renderingStart() override;
     void start() override;
     void update(float deltaTime) override;
     void render() override;
@@ -16,7 +19,9 @@ protected:
 private:
     GLuint triangleVbo, triangleVao;
     GLuint shaderProgram;
-    GLuint screenSizeLocation;
+    GLuint screenSizeLocation, cameraPositionLocation;
+
+    vec3 cameraPosition;
 
     static constexpr int GRID_SIZE = 1;
 

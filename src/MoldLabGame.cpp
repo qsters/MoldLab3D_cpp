@@ -20,8 +20,7 @@ static const Vertex quadVertices[6] = {
 
 
 MoldLabGame::MoldLabGame(int width, int height, const std::string& title)
-    : GameEngine(width, height, title), triangleVbo(0), triangleVao(0), shaderProgram(0), screenSizeLocation(0),
-      voxelGrid{} {
+    : GameEngine(width, height, title), triangleVbo(0), triangleVao(0), shaderProgram(0), screenSizeLocation(0), cameraPositionLocation(0), voxelGrid{}, cameraPosition{} {
 }
 
 MoldLabGame::~MoldLabGame() {
@@ -31,9 +30,7 @@ MoldLabGame::~MoldLabGame() {
     std::cout << "Exiting..." << std::endl;
 }
 
-
-
-void MoldLabGame::start() {
+void MoldLabGame::renderingStart() {
     glGenBuffers(1, &triangleVbo);
     glBindBuffer(GL_ARRAY_BUFFER, triangleVbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
@@ -57,7 +54,10 @@ void MoldLabGame::start() {
 
     // Get locations of shader attributes and uniforms
     screenSizeLocation = glGetUniformLocation(shaderProgram, "screenSize");
+    cameraPositionLocation = glGetUniformLocation(shaderProgram, "cameraPosition");
+
     GLint positionAttributeLocation = glGetAttribLocation(shaderProgram, "position");
+
 
     glGenVertexArrays(1, &triangleVao);
     glBindVertexArray(triangleVao);
@@ -71,6 +71,12 @@ void MoldLabGame::start() {
     glVertexAttribPointer(positionAttributeLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, position)));
 
     glBindVertexArray(0); // Unbind VAO
+}
+
+
+void MoldLabGame::start() {
+
+    
 
     // **Initialize the voxel grid with 1's to stress test
     for (int x = 0; x < GRID_SIZE; x++) {
@@ -94,8 +100,17 @@ void MoldLabGame::render() {
 
     glUseProgram(shaderProgram);
 
-    if (screenSizeLocation != -1) {
-        glUniform2f(static_cast<GLint>(screenSizeLocation), static_cast<GLfloat>(windowWidth), static_cast<GLfloat>(windowHeight));
+    // if (screenSizeLocation != -1) {
+    //     glUniform2f(static_cast<GLint>(screenSizeLocation), static_cast<GLfloat>(windowWidth), static_cast<GLfloat>(windowHeight));
+    // } else {
+    //     std::cerr << "Screen size location is not set" << std::endl;
+    // }
+
+    if (cameraPositionLocation != -1) {
+        vec3 cameraPosition = {0.0f, 0.0f, -5.0f}; // Hardcoded for now
+        glUniform3f(static_cast<GLint>(cameraPositionLocation), cameraPosition[0], cameraPosition[1], cameraPosition[2]);
+    } else {
+        std::cerr << "Camera position location is not set" << std::endl;
     }
 
     // Draw the full-screen quad
