@@ -19,9 +19,9 @@ protected:
 private:
     GLuint triangleVbo, triangleVao;
     GLuint shaderProgram;
-    GLuint screenSizeLocation, cameraPositionLocation;
+    GLuint screenSizeLocation, cameraPositionLocation, focusPointLocation;
 
-    vec3 cameraPosition;
+    vec3 cameraPosition, focusPoint;
 
     static constexpr int GRID_SIZE = 1;
 

@@ -24,8 +24,8 @@ GameEngine::~GameEngine() {
 }
 
 void GameEngine::run() {
-    renderingStart();
     start();
+    renderingStart();
 
     while (!glfwWindowShouldClose(window)) {
         // Calculate delta time

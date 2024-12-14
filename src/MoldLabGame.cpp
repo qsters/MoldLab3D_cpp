@@ -18,9 +18,16 @@ static const Vertex quadVertices[6] = {
     {{-1.0f,  1.0f, 0.0f}}  // Top-left
 };
 
+void set_vec3(vec3 v, float x, float y, float z) {
+    v[0] = x;
+    v[1] = y;
+    v[2] = z;
+}
+
+
 
 MoldLabGame::MoldLabGame(int width, int height, const std::string& title)
-    : GameEngine(width, height, title), triangleVbo(0), triangleVao(0), shaderProgram(0), screenSizeLocation(0), cameraPositionLocation(0), voxelGrid{}, cameraPosition{} {
+    : GameEngine(width, height, title), triangleVbo(0), triangleVao(0), shaderProgram(0), screenSizeLocation(0), cameraPositionLocation(0), cameraPosition{}, focusPoint{}, focusPointLocation{}, voxelGrid{} {
 }
 
 MoldLabGame::~MoldLabGame() {
@@ -55,6 +62,7 @@ void MoldLabGame::renderingStart() {
     // Get locations of shader attributes and uniforms
     screenSizeLocation = glGetUniformLocation(shaderProgram, "screenSize");
     cameraPositionLocation = glGetUniformLocation(shaderProgram, "cameraPosition");
+    focusPointLocation = glGetUniformLocation(shaderProgram, "focusPoint");
 
     GLint positionAttributeLocation = glGetAttribLocation(shaderProgram, "position");
 
@@ -75,8 +83,9 @@ void MoldLabGame::renderingStart() {
 
 
 void MoldLabGame::start() {
+    cameraPosition[2] = -10.0;
 
-    
+
 
     // **Initialize the voxel grid with 1's to stress test
     for (int x = 0; x < GRID_SIZE; x++) {
@@ -89,7 +98,22 @@ void MoldLabGame::start() {
 }
 
 void MoldLabGame::update(float deltaTime) {
+    static const float ROTATION_SPEED = 0.5f; // Radians per second
+    static float angle = 0.0f; // Current angle of rotation
 
+    // Update the angle
+    angle += ROTATION_SPEED * deltaTime;
+
+    // Compute new camera position in a circular path around the origin
+    float radius = 10.0f; // Distance from the origin
+    cameraPosition[0] = radius * cos(angle); // X-coordinate
+    cameraPosition[2] = radius * sin(angle); // Z-coordinate
+    cameraPosition[1] = 2.0f; // Keep Y-coordinate fixed
+
+    // Optional: Reset angle to prevent overflow
+    if (angle > 2.0f * M_PI) {
+        angle -= 2.0f * M_PI;
+    }
 }
 
 void MoldLabGame::render() {
@@ -107,12 +131,16 @@ void MoldLabGame::render() {
     // }
 
     if (cameraPositionLocation != -1) {
-        vec3 cameraPosition = {0.0f, 0.0f, -5.0f}; // Hardcoded for now
         glUniform3f(static_cast<GLint>(cameraPositionLocation), cameraPosition[0], cameraPosition[1], cameraPosition[2]);
     } else {
         std::cerr << "Camera position location is not set" << std::endl;
     }
 
+    if (focusPointLocation != -1) {
+        glUniform3f(static_cast<GLint>(focusPointLocation), focusPoint[0], focusPoint[1], focusPoint[2]);
+    } else {
+        std::cerr << "Focus point location is not set" << std::endl;
+    }
     // Draw the full-screen quad
     glBindVertexArray(triangleVao);
     glDrawArrays(GL_TRIANGLES, 0, 6);

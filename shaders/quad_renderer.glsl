@@ -17,9 +17,16 @@ void main() {
 
 in vec2 uv;
 uniform vec3 cameraPosition;
-
+uniform vec3 focusPoint;
 
 out vec4 fragmentColor;
+
+vec3 lightPosition = vec3(2.0, 4.0, 2.0); // Light above and slightly to the side
+vec3 lightColor = vec3(1.0, 1.0, 1.0);    // Pure white light
+vec3 objectColor = vec3(0.0, 1.0, 0.2);   // Reddish object
+
+
+
 
 // Calculate the distance from a point to a cube centered at `c` with size `s`
 float distance_from_cube(in vec3 p, in vec3 c, float s) {
@@ -37,12 +44,21 @@ float map_the_world(in vec3 p) {
     return cube_0;
 }
 
+// Calculate the normal at a point on the surface
+vec3 calculate_normal(in vec3 p) {
+    const float EPSILON = 0.01;
+    float dx = map_the_world(p + vec3(EPSILON, 0.0, 0.0)) - map_the_world(p - vec3(EPSILON, 0.0, 0.0));
+    float dy = map_the_world(p + vec3(0.0, EPSILON, 0.0)) - map_the_world(p - vec3(0.0, EPSILON, 0.0));
+    float dz = map_the_world(p + vec3(0.0, 0.0, EPSILON)) - map_the_world(p - vec3(0.0, 0.0, EPSILON));
+    return normalize(vec3(dx, dy, dz));
+}
+
 // Perform ray marching to find intersections with the scene
 vec3 ray_march(in vec3 ro, in vec3 rd) {
     float total_distance_traveled = 0.0;
-    const int NUMBER_OF_STEPS = 32;
-    const float MINIMUM_HIT_DISTANCE = 0.001;
-    const float MAXIMUM_TRACE_DISTANCE = 1000.0;
+    const int NUMBER_OF_STEPS = 40;
+    const float MINIMUM_HIT_DISTANCE = 0.05;
+    const float MAXIMUM_TRACE_DISTANCE = 50.0;
 
     for (int i = 0; i < NUMBER_OF_STEPS; ++i) {
         vec3 current_position = ro + total_distance_traveled * rd;
@@ -50,11 +66,27 @@ vec3 ray_march(in vec3 ro, in vec3 rd) {
         float distance_to_closest = map_the_world(current_position);
 
         if (distance_to_closest < MINIMUM_HIT_DISTANCE) {
-            return vec3(0.0, 1.0, 0.0);
+            // Calculate normal at the hit point
+            vec3 normal = calculate_normal(current_position);
+
+            // Calculate lighting
+            vec3 lightDir = normalize(lightPosition - current_position); // Direction to light
+            float diff = max(dot(normal, lightDir), 0.0); // Lambertian (diffuse) term
+
+            // Calculate view direction
+            vec3 viewDir = normalize(ro - current_position);
+
+            // Combine light contributions
+            vec3 ambient = 0.1 * lightColor; // Ambient lighting
+            vec3 diffuse = diff * lightColor; // Diffuse lighting
+
+            vec3 color = diffuse + ambient ; // Combine all light components
+
+            return color * objectColor; // Multiply by object color
         }
 
         if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE) {
-            break;
+            return vec3(i / float(NUMBER_OF_STEPS), 0.0, 0.0);
         }
         total_distance_traveled += distance_to_closest;
     }
@@ -62,9 +94,16 @@ vec3 ray_march(in vec3 ro, in vec3 rd) {
 }
 
 void main() {
+    // Calculate camera orientation
+    vec3 forward = normalize(focusPoint - cameraPosition); // Forward direction
+    vec3 worldUp = vec3(0.0, 1.0, 0.0); // World up vector
+    vec3 right = normalize(cross(worldUp, forward)); // Right vector
+    vec3 up = cross(forward, right); // Up vector
+
     // Ray origin and direction
     vec3 ro = cameraPosition;
-    vec3 rd = normalize(vec3(uv, 1.0)); // Ensure direction vector is normalized
+    vec3 rd = normalize(uv.x * right + uv.y * up + forward); // Combine screen-space uv with camera orientation
 
     fragmentColor = vec4(ray_march(ro, rd), 1.0);
 }
+
