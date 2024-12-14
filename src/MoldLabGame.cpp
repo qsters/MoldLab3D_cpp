@@ -29,7 +29,7 @@ void set_vec3(vec3 v, float x, float y, float z) {
 }
 
 MoldLabGame::MoldLabGame(int width, int height, const std::string& title)
-: GameEngine(width, height, title), triangleVbo(0), triangleVao(0), shaderProgram(0), voxelGrid{}, voxelGridBuffer(0) {
+: GameEngine(width, height, title), voxelGrid{} {
     displayFramerate = true;
 }
 
@@ -109,7 +109,25 @@ void MoldLabGame::renderingStart() {
 
 
 void MoldLabGame::start() {
+    inputManager.bindAction(GLFW_KEY_D, InputEventType::KeyPressed, [this]() {
+        std::cout << "D key pressed" << std::endl;
+        isDPressed = true;
+    });
 
+    inputManager.bindAction(GLFW_KEY_D, InputEventType::KeyReleased, [this]() {
+        std::cout << "D key released" << std::endl;
+        isDPressed = false;
+    });
+
+    inputManager.bindAction(GLFW_KEY_A, InputEventType::KeyPressed, [this]() {
+        std::cout << "A key pressed" << std::endl;
+        isAPressed = true;
+    });
+
+    inputManager.bindAction(GLFW_KEY_A, InputEventType::KeyReleased, [this]() {
+        std::cout << "A key released" << std::endl;
+        isAPressed = false;
+    });
 }
 
 void MoldLabGame::update(float deltaTime) {
@@ -184,21 +202,4 @@ void MoldLabGame::render() {
     // Draw the full-screen quad
     glBindVertexArray(triangleVao);
     glDrawArrays(GL_TRIANGLES, 0, 6);
-}
-
-void MoldLabGame::onKeyCallback(int key, int scancode, int action, int mods) {
-    // Track key press/release state
-    if (key == GLFW_KEY_D) {
-        if (action == GLFW_PRESS)
-            isDPressed = true;
-        else if (action == GLFW_RELEASE)
-            isDPressed = false;
-    }
-
-    if (key == GLFW_KEY_A) {
-        if (action == GLFW_PRESS)
-            isAPressed = true;
-        else if (action == GLFW_RELEASE)
-            isAPressed = false;
-    }
 }

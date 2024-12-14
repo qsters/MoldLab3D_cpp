@@ -19,16 +19,20 @@ protected:
     void update(float deltaTime) override;
     void render() override;
 
-    void onKeyCallback(int key, int scancode, int action, int mods) override;
-
 private:
-    GLuint triangleVbo, triangleVao, voxelGridBuffer;
-    GLuint shaderProgram;
+    GLuint triangleVbo = 0, triangleVao = 0, voxelGridBuffer = 0;
+    GLuint shaderProgram = 0;
     ShaderVariable<vec3> cameraPositionSV, focusPointSV;
     ShaderVariable<int> gridSizeSV;
     ShaderVariable<float> testValueSV;
 
     float voxelGrid[GRID_SIZE][GRID_SIZE][GRID_SIZE];
+
+    float horizontalAngle = 0.0f; // Rotation angle around the Y-axis
+    float verticalAngle = 0.0f;   // Rotation angle around the X-axis
+    float orbitRadius = 10.0f;    // Distance from the origin
+    float rotationSpeed = 1.0f;   // Speed of rotation
+
 
 };
 

@@ -22,7 +22,9 @@ add_executable(MoldLab3D ${SRC_FILES}
         src/MoldLabGame.cpp
         src/GameEngine.cpp
         include/ShaderVariable.h
-        src/ShaderVariable.cpp)
+        src/ShaderVariable.cpp
+        src/InputManager.cpp
+        include/InputManager.h)
 
 # Find and link libraries
 find_package(OpenGL REQUIRED)

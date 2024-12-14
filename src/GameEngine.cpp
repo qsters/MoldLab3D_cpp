@@ -41,6 +41,7 @@ void GameEngine::run() {
         frameCount++;
         frameTimeAccumulator += deltaTime;
 
+        inputManager.handleInput(window); // Process inputs
         update(deltaTime);
         render();
 
@@ -197,9 +198,6 @@ void GameEngine::keyCallback(GLFWwindow *window, int key, int scancode, int acti
         std::cerr << "Error: Could not get a window user pointer" << std::endl;
         return;
     } // Ensure the engine instance is valid
-
-
-    engine->onKeyCallback(key, scancode, action, mods);
     // TODO Finish implementing an actual input manager
 }
 

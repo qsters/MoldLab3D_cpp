@@ -6,6 +6,7 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <string>
+#include "InputManager.h"
 
 // Abstract base class for game engines
 class GameEngine {
@@ -37,8 +38,6 @@ protected:
     virtual void update(float deltaTime) = 0;
     virtual void render() = 0;
 
-    virtual void onKeyCallback(int key, int scancode, int action, int mods) = 0;
-
     // Utility methods for derived classes
     [[nodiscard]] int getScreenWidth() const;
     [[nodiscard]] int getScreenHeight() const;
@@ -47,6 +46,8 @@ protected:
     [[nodiscard]] float DeltaTime() const;
 
     bool displayFramerate = false;
+    InputManager inputManager;
+
 
 
 
