@@ -45,13 +45,16 @@ public:
     }
 
     // Upload the value to the shader
-    void uploadToShader() const {
+    void uploadToShader(bool muteError = false) const {
         if (location == -1) {
-            std::cerr << "ShaderVariable: Invalid location for shader variable: " << name << std::endl;
+            if (!muteError) {
+                std::cerr << "ShaderVariable: Invalid location for shader variable: " << name << std::endl;
+            }
             return;
         }
         upload();
     }
+
 
 private:
     void upload() const {

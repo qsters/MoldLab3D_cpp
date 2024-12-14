@@ -29,14 +29,14 @@ void set_vec3(vec3 v, float x, float y, float z) {
 }
 
 MoldLabGame::MoldLabGame(int width, int height, const std::string& title)
-: GameEngine(width, height, title), triangleVbo(0), triangleVao(0), shaderProgram(0), voxelGrid{} {
+: GameEngine(width, height, title), triangleVbo(0), triangleVao(0), shaderProgram(0), voxelGrid{}, voxelGridBuffer(0) {
     displayFramerate = true;
 }
 
 MoldLabGame::~MoldLabGame() {
     if (triangleVbo) glDeleteBuffers(1, &triangleVbo);
     if (triangleVao) glDeleteVertexArrays(1, &triangleVao);
-
+    if (voxelGridBuffer) glDeleteBuffers(1, &voxelGridBuffer);
     std::cout << "Exiting..." << std::endl;
 }
 
@@ -88,21 +88,28 @@ void MoldLabGame::renderingStart() {
     glVertexAttribPointer(positionAttributeLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, position)));
 
     glBindVertexArray(0); // Unbind VAO
-}
 
-
-void MoldLabGame::start() {
-    vec3& cameraPosition = *cameraPositionSV.value;
-
-    set_vec3(cameraPosition, GRID_SIZE * 3, GRID_SIZE * 2, GRID_SIZE * 5);
     // **Initialize the voxel grid with 1's to stress test
     for (int x = 0; x < GRID_SIZE; x++) {
         for (int y = 0; y < GRID_SIZE; y++) {
             for (int z = 0; z < GRID_SIZE; z++) {
-                voxelGrid[x][y][z] = 1.0f;
+                float random_number = std::rand() / (RAND_MAX + 1.0);
+                voxelGrid[x][y][z] = random_number;
             }
         }
     }
+
+    // ** Create Voxel Grid Buffer **
+    glGenBuffers(1, &voxelGridBuffer);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, voxelGridBuffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(voxelGrid), voxelGrid, GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, voxelGridBuffer); // Binding index 0
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind buffer
+}
+
+
+void MoldLabGame::start() {
+
 }
 
 void MoldLabGame::update(float deltaTime) {
@@ -171,10 +178,8 @@ void MoldLabGame::render() {
 
     gridSizeSV.uploadToShader();
     cameraPositionSV.uploadToShader();
-    // std::cout << *(cameraPositionSV.value)[0] << " " << *(cameraPositionSV.value)[1] << " " << *(cameraPositionSV.value)[2] << std::endl;
-
     focusPointSV.uploadToShader();
-    testValueSV.uploadToShader();
+    testValueSV.uploadToShader(true);
     
     // Draw the full-screen quad
     glBindVertexArray(triangleVao);

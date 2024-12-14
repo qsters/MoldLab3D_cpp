@@ -30,9 +30,13 @@ vec3 objectColor = vec3(0.0, 1.0, 0.2);   // Reddish object
 
 float maxCubeSideLength = 0.9;
 
-vec3 gridMin = vec3(-1.0);                // Slightly below the grid's minimum
-vec3 gridMax = vec3(gridSize) + vec3(1.0); // Slightly above the grid's maximum
+vec3 gridMin = vec3(-0.6);                // Slightly below the grid's minimum
+vec3 gridMax = vec3(gridSize) + vec3(0.6); // Slightly above the grid's maximum
 
+// Define the voxel grid as a shader storage buffer
+layout(std430, binding = 0) buffer VoxelGrid {
+    float voxelData[]; // Flattened 3D grid as a 1D array
+};
 
 // Calculate the distance from a point to a cube centered at `c` with size `s`
 float distance_from_cube(in vec3 point, in vec3 center, in float sideLength) {
@@ -58,11 +62,13 @@ float map_the_world(in vec3 point) {
     for (int x = 0; x < gridSize; ++x) {
         for (int y = 0; y < gridSize; ++y) {
             for (int z = 0; z < gridSize; ++z) {
+                int idx = x + gridSize * (y + gridSize * z); // index for flattened 3d array
+
                 // Calculate the grid position
-                vec3 gridPoint = vec3(float(x), float(y), float(z));
+                vec3 gridPoint = vec3(float(x), float(y), float(z)) * testValue;
 
                 // Calculate the distance to the cube at this grid point
-                float cube = distance_from_cube(point, gridPoint, cubeSize);
+                float cube = distance_from_cube(point, gridPoint, voxelData[idx]);
 
                 // Combine distances using smooth_min for blending
                 result = smooth_min(result, cube, 0.15);
@@ -147,10 +153,10 @@ void main() {
     vec3 rayDirection = normalize(uv.x * right + uv.y * up + forward); // Combine screen-space uv with camera orientation
 
     // Cull rays that don't intersect the AABB
-//    if (!intersectsAABB(rayOrigin, rayDirection, gridMin, gridMax)) {
-//        fragmentColor = vec4(0.0, 0.0, 1.0, 0.0); // Background color
-//        return;
-//    }
+    if (!intersectsAABB(rayOrigin, rayDirection, gridMin, gridMax)) {
+        fragmentColor = vec4(0.0, 0.0, 1.0, 0.0); // Background color
+        return;
+    }
 
     fragmentColor = vec4(ray_march(rayOrigin, rayDirection), 1.0);
 }
