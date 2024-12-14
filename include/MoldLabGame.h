@@ -28,12 +28,10 @@ private:
 
     float voxelGrid[GRID_SIZE][GRID_SIZE][GRID_SIZE];
 
-    float horizontalAngle = 0.0f; // Rotation angle around the Y-axis
+    float horizontalAngle = 90.0f; // Rotation angle around the Y-axis
     float verticalAngle = 0.0f;   // Rotation angle around the X-axis
     float orbitRadius = 10.0f;    // Distance from the origin
     float rotationSpeed = 1.0f;   // Speed of rotation
-
-
 };
 
 #endif // MOLDLABGAME_H

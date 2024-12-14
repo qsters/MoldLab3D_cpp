@@ -192,13 +192,6 @@ void GameEngine::errorCallback(int error, const char* description) {
 void GameEngine::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
         glfwSetWindowShouldClose(window, GLFW_TRUE); // Close window on Escape key
-
-    GameEngine* engine = static_cast<GameEngine*>(glfwGetWindowUserPointer(window));
-    if (!engine) {
-        std::cerr << "Error: Could not get a window user pointer" << std::endl;
-        return;
-    } // Ensure the engine instance is valid
-    // TODO Finish implementing an actual input manager
 }
 
 void GameEngine::framebufferSizeCallback(GLFWwindow* window, int width, int height) {

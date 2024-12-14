@@ -5,6 +5,10 @@
 
 static bool isDPressed = false;
 static bool isAPressed = false;
+static bool isLeftPressed = false;
+static bool isRightPressed = false;
+static bool isUpPressed = false;
+static bool isDownPressed = false;
 
 
 typedef struct Vertex {
@@ -62,7 +66,7 @@ void MoldLabGame::renderingStart() {
 
     CheckProgramLinking(shaderProgram);
 
-    static vec3 cameraPosition = {0.0f, 0.0f, 0.0f};
+    static vec3 cameraPosition = {GRID_SIZE / 2.0, GRID_SIZE * 1.4, GRID_SIZE * 1.4};
     static vec3 focusPoint = {0.0f, 0.0f, 0.0f};
     static int gridSize = GRID_SIZE;
     static float testValue = 1.0f;
@@ -109,60 +113,63 @@ void MoldLabGame::renderingStart() {
 
 
 void MoldLabGame::start() {
-    inputManager.bindAction(GLFW_KEY_D, InputEventType::KeyPressed, [this]() {
-        std::cout << "D key pressed" << std::endl;
-        isDPressed = true;
-    });
+    inputManager.bindKeyState(GLFW_KEY_D, &isDPressed);
+    inputManager.bindKeyState(GLFW_KEY_A, &isAPressed);
+    inputManager.bindKeyState(GLFW_KEY_LEFT, &isLeftPressed);
+    inputManager.bindKeyState(GLFW_KEY_RIGHT, &isRightPressed);
+    inputManager.bindKeyState(GLFW_KEY_UP, &isUpPressed);
+    inputManager.bindKeyState(GLFW_KEY_DOWN, &isDownPressed);
+}
 
-    inputManager.bindAction(GLFW_KEY_D, InputEventType::KeyReleased, [this]() {
-        std::cout << "D key released" << std::endl;
-        isDPressed = false;
-    });
+void HandleCameraMovement(float horizontalAngle, float verticalAngle, float orbitRadius,
+                          const ShaderVariable<vec3>& cameraPositionSV, const ShaderVariable<vec3>& focusPointSV) {
+    // Convert angles to radians
+    float azimuth = horizontalAngle * M_PI / 180.0f; // Azimuth in radians
+    float altitude = verticalAngle * M_PI / 180.0f; // Altitude in radians
 
-    inputManager.bindAction(GLFW_KEY_A, InputEventType::KeyPressed, [this]() {
-        std::cout << "A key pressed" << std::endl;
-        isAPressed = true;
-    });
+    // Compute camera position in spherical coordinates relative to the origin
+    float x = orbitRadius * cos(altitude) * sin(azimuth);
+    float y = orbitRadius * sin(altitude);
+    float z = orbitRadius * cos(altitude) * cos(azimuth);
 
-    inputManager.bindAction(GLFW_KEY_A, InputEventType::KeyReleased, [this]() {
-        std::cout << "A key released" << std::endl;
-        isAPressed = false;
-    });
+    // Get the focus point position
+    const vec3& focusPoint = *focusPointSV.value;
+
+    // Offset camera position by focus point
+    set_vec3(*cameraPositionSV.value, focusPoint[0] + x, focusPoint[1] + y, focusPoint[2] + z);
 }
 
 void MoldLabGame::update(float deltaTime) {
-    static const float ROTATION_SPEED = 0.5f; // Radians per second
+    static const float ROTATION_SPEED = 35.0f; // Radians per second
     static float angle = 0.0f; // Current angle of rotation
 
     // Update the angle
     angle += ROTATION_SPEED * deltaTime;
 
-    vec3& focusPoint = *focusPointSV.value;
-
     float gridCenter = (GRID_SIZE - 1.0f) * 0.5f; // Adjust for the centered cube positions
-    set_vec3(focusPoint, gridCenter, gridCenter, gridCenter);
+    set_vec3(*focusPointSV.value, gridCenter, gridCenter, gridCenter);
 
-
-    float orbitRadius = GRID_SIZE * 2.0f; // Adjust this as needed for a suitable orbit radius
-
-    // Orbit speed (radians per second)
-    float orbitSpeed = 1.0f;
-
-    // Update the angle based on delta time
-    static float orbitAngle = 0.0f;
-    orbitAngle += orbitSpeed * deltaTime;
-
-    // Wrap the angle to avoid overflow
-    if (orbitAngle > 2.0f * M_PI) {
-        orbitAngle -= 2.0f * M_PI;
+    // Adjust horizontal angle
+    if (isLeftPressed) {
+        horizontalAngle += ROTATION_SPEED * deltaTime;
+    }
+    if (isRightPressed) {
+        horizontalAngle -= ROTATION_SPEED * deltaTime;
     }
 
-    // Compute new camera position
-    float cameraX = gridCenter + orbitRadius * cos(orbitAngle); // Circular orbit in the XZ plane
-    float cameraZ = gridCenter + orbitRadius * sin(orbitAngle);
+    // Adjust vertical angle (clamped to avoid flipping)
+    if (isUpPressed) {
+        verticalAngle = std::min(verticalAngle + ROTATION_SPEED * deltaTime, 89.0f);
+    }
+    if (isDownPressed) {
+        verticalAngle = std::max(verticalAngle - ROTATION_SPEED * deltaTime, -89.0f);
+    }
 
-    // Set the camera position, keeping the y-value fixed
-    set_vec3(*cameraPositionSV.value, cameraX, gridCenter, cameraZ);
+    // Ensure angles wrap around properly
+    if (horizontalAngle > 360.0f) horizontalAngle -= 360.0f;
+    if (horizontalAngle < 0.0f) horizontalAngle += 360.0f;
+
+    HandleCameraMovement(horizontalAngle, verticalAngle, GRID_SIZE * 1.3, cameraPositionSV, focusPointSV);
 
     float testScaler = 1.5f;
     // Adjust testValueSV based on key state
@@ -176,14 +183,6 @@ void MoldLabGame::update(float deltaTime) {
         testValue -= deltaTime * testScaler; // Same rate but in the opposite direction
         std::cout << "Test value: " << testValue << std::endl;
     }
-
-    // // Compute new camera position in a circular path around the origin
-    // float radius = 10.0f; // Distance from the origin
-    // set_vec3(cameraPosition, radius * cos(angle), 2.0f, radius * sin(angle));
-    // // Optional: Reset angle to prevent overflow
-    // if (angle > 2.0f * M_PI) {
-    //     angle -= 2.0f * M_PI;
-    // }
 }
 
 void MoldLabGame::render() {

@@ -4,6 +4,10 @@ void InputManager::bindAction(int key, InputEventType eventType, const ActionCal
     actionBindings[key][eventType] = callback;
 }
 
+void InputManager::bindKeyState(int key, bool* state) {
+    keyStates[key] = state;
+}
+
 void InputManager::handleInput(GLFWwindow* window) {
     for (const auto& binding : actionBindings) {
         int key = binding.first;
@@ -25,5 +29,14 @@ void InputManager::handleInput(GLFWwindow* window) {
             }
             pressedKeys.erase(key); // Mark as released
         }
+    }
+
+    // Update key state variables
+    for (const auto& keyState : keyStates) {
+        int key = keyState.first;
+        bool* state = keyState.second;
+
+        // Set the boolean based on the key's current state
+        *state = glfwGetKey(window, key) == GLFW_PRESS;
     }
 }
