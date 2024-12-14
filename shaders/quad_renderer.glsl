@@ -61,37 +61,40 @@ vec3 calculate_normal(in vec3 p) {
     return normalize(vec3(dx, dy, dz));
 }
 
+vec3 calculage_lighting(in vec3 rayOrigin, in vec3 current_position) {
+    // Calculate normal at the hit point
+    vec3 normal = calculate_normal(current_position);
+
+    // Calculate lighting
+    vec3 lightDir = normalize(lightPosition - current_position); // Direction to light
+    float diff = max(dot(normal, lightDir), 0.0); // Lambertian (diffuse) term
+
+    // Calculate view direction
+    vec3 viewDir = normalize(rayOrigin - current_position);
+
+    // Combine light contributions
+    vec3 ambient = 0.1 * lightColor; // Ambient lighting
+    vec3 diffuse = diff * lightColor; // Diffuse lighting
+
+    vec3 color = diffuse + ambient ; // Combine all light components
+
+    return color * objectColor; // Multiply by object color
+}
+
 // Perform ray marching to find intersections with the scene
-vec3 ray_march(in vec3 ro, in vec3 rd) {
+vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
     float total_distance_traveled = 0.0;
-    const int NUMBER_OF_STEPS = 40;
+    const int NUMBER_OF_STEPS = 50;
     const float MINIMUM_HIT_DISTANCE = 0.01;
     const float MAXIMUM_TRACE_DISTANCE = 50.0;
 
     for (int i = 0; i < NUMBER_OF_STEPS; ++i) {
-        vec3 current_position = ro + total_distance_traveled * rd;
+        vec3 current_position = rayOrigin + total_distance_traveled * rayDirection;
 
         float distance_to_closest = map_the_world(current_position);
 
-
         if (distance_to_closest < MINIMUM_HIT_DISTANCE) {
-            // Calculate normal at the hit point
-            vec3 normal = calculate_normal(current_position);
-
-            // Calculate lighting
-            vec3 lightDir = normalize(lightPosition - current_position); // Direction to light
-            float diff = max(dot(normal, lightDir), 0.0); // Lambertian (diffuse) term
-
-            // Calculate view direction
-            vec3 viewDir = normalize(ro - current_position);
-
-            // Combine light contributions
-            vec3 ambient = 0.1 * lightColor; // Ambient lighting
-            vec3 diffuse = diff * lightColor; // Diffuse lighting
-
-            vec3 color = diffuse + ambient ; // Combine all light components
-
-            return color * objectColor; // Multiply by object color
+            return calculage_lighting(rayOrigin, current_position);
         }
 
         if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE) {
@@ -110,9 +113,9 @@ void main() {
     vec3 up = cross(forward, right); // Up vector
 
     // Ray origin and direction
-    vec3 ro = cameraPosition;
-    vec3 rd = normalize(uv.x * right + uv.y * up + forward); // Combine screen-space uv with camera orientation
+    vec3 rayOrigin = cameraPosition;
+    vec3 rayDirection = normalize(uv.x * right + uv.y * up + forward); // Combine screen-space uv with camera orientation
 
-    fragmentColor = vec4(ray_march(ro, rd), 1.0);
+    fragmentColor = vec4(ray_march(rayOrigin, rayDirection), 1.0);
 }
 
