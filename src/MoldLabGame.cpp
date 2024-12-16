@@ -97,8 +97,14 @@ void MoldLabGame::renderingStart() {
     for (int x = 0; x < GRID_SIZE; x++) {
         for (int y = 0; y < GRID_SIZE; y++) {
             for (int z = 0; z < GRID_SIZE; z++) {
-                float random_number = std::rand() / (RAND_MAX + 1.0);
-                voxelGrid[x][y][z] = random_number;
+                bool placeCube = (std::rand() / (RAND_MAX + 1.0)) >= 0.75;
+
+                if (placeCube) {
+                    float random_number = std::rand() / (RAND_MAX + 1.0);
+                    voxelGrid[x][y][z] = random_number;
+                } else {
+                    voxelGrid[x][y][z] = 0.0f;
+                }
             }
         }
     }
@@ -187,8 +193,6 @@ void MoldLabGame::update(float deltaTime) {
 
 void MoldLabGame::render() {
     // Handle window size and aspect ratio
-    auto [windowWidth, windowHeight] = getScreenSize();
-
     glClear(GL_COLOR_BUFFER_BIT); // Clear the screen and depth buffer
 
     glUseProgram(shaderProgram);

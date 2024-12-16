@@ -30,8 +30,10 @@ vec3 objectColor = vec3(0.0, 1.0, 0.2);   // Reddish object
 
 float maxCubeSideLength = 0.9;
 
-vec3 gridMin = vec3(-0.6);                // Slightly below the grid's minimum
-vec3 gridMax = vec3(gridSize) + vec3(0.6); // Slightly above the grid's maximum
+vec3 gridMin = vec3(0.0);                // Slightly below the grid's minimum
+vec3 gridMax = vec3(gridSize - 1); // Slightly above the grid's maximum
+
+vec3 AABB_offset = vec3(0.51);
 
 // Define the voxel grid as a shader storage buffer
 layout(std430, binding = 0) buffer VoxelGrid {
@@ -57,12 +59,14 @@ float smooth_max(float a, float b, float k) {
 // Map function to define the scene
 float map_the_world(in vec3 point) {
     float result = 1e6; // Start with a very large value (infinite distance)
-    float cubeSize = testValue; // Size of each cube
 
     for (int x = 0; x < gridSize; ++x) {
         for (int y = 0; y < gridSize; ++y) {
             for (int z = 0; z < gridSize; ++z) {
                 int idx = x + gridSize * (y + gridSize * z); // index for flattened 3d array
+
+                // Skip zero-sized cubes
+                if (voxelData[idx] <= 0.01) continue;
 
                 // Calculate the grid position
                 vec3 gridPoint = vec3(float(x), float(y), float(z)) * testValue;
@@ -71,12 +75,13 @@ float map_the_world(in vec3 point) {
                 float cube = distance_from_cube(point, gridPoint, voxelData[idx]);
 
                 // Combine distances using smooth_min for blending
-                result = smooth_min(result, cube, 0.15);
+                result = smooth_min(result, cube, 0.55);
             }
         }
     }
     return result; // Return the minimum distance for the scene
 }
+
 // Calculate the normal at a point on the surface
 vec3 calculate_normal(in vec3 point) {
     const float EPSILON = 0.01;
@@ -109,7 +114,7 @@ vec3 calculage_lighting(in vec3 rayOrigin, in vec3 current_position) {
 // Perform ray marching to find intersections with the scene
 vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
     float total_distance_traveled = 0.0;
-    const int NUMBER_OF_STEPS = 50;
+    const int NUMBER_OF_STEPS = 100;
     const float MINIMUM_HIT_DISTANCE = 0.01;
     const float MAXIMUM_TRACE_DISTANCE = 50.0;
 
@@ -123,20 +128,22 @@ vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
         }
 
         if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE) {
-            return vec3(i / float(NUMBER_OF_STEPS), 0.0, 0.0);
+            return vec3(1 - (i / float(NUMBER_OF_STEPS)), 0.0, 0.0);
         }
         total_distance_traveled += distance_to_closest;
     }
     return vec3(0.0); // Background color (black)
 }
 
-bool intersectsAABB(vec3 rayOrigin, vec3 rayDirection, vec3 gridMin, vec3 gridMax) {
+bool intersectsAABB(vec3 rayOrigin, vec3 rayDirection, vec3 gridMin, vec3 gridMax, out float tNear) {
+    vec3 adjustedMin = gridMin - AABB_offset;
+    vec3 adjustedMax = gridMax + AABB_offset;
 
-    vec3 tMin = (gridMin - rayOrigin) / rayDirection;
-    vec3 tMax = (gridMax - rayOrigin) / rayDirection;
+    vec3 tMin = (adjustedMin - rayOrigin) / rayDirection;
+    vec3 tMax = (adjustedMax - rayOrigin) / rayDirection;
     vec3 t1 = min(tMin, tMax);
     vec3 t2 = max(tMin, tMax);
-    float tNear = max(max(t1.x, t1.y), t1.z);
+    tNear = max(max(t1.x, t1.y), t1.z);
     float tFar = min(min(t2.x, t2.y), t2.z);
     return tNear <= tFar && tFar >= 0.0;
 }
@@ -152,12 +159,16 @@ void main() {
     vec3 rayOrigin = cameraPosition;
     vec3 rayDirection = normalize(uv.x * right + uv.y * up + forward); // Combine screen-space uv with camera orientation
 
+    float tNear;
     // Cull rays that don't intersect the AABB
-    if (!intersectsAABB(rayOrigin, rayDirection, gridMin, gridMax)) {
-        fragmentColor = vec4(0.0, 0.0, 1.0, 0.0); // Background color
+    if (!intersectsAABB(rayOrigin, rayDirection, gridMin, gridMax, tNear)) {
+        fragmentColor = vec4(1.0, 0.0, 0.0, 0.0); // Background color
         return;
     }
+    // Advance the ray origin to the intersection point with the AABB
+    rayOrigin += rayDirection * max(tNear, 0.0); // Ensure tNear is non-negative
 
+    // Perform ray marching from the AABB intersection point
     fragmentColor = vec4(ray_march(rayOrigin, rayDirection), 1.0);
 }
 
