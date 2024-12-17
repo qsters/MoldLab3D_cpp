@@ -190,7 +190,7 @@ void main() {
     }
     // Advance the ray origin to the intersection point with the AABB
     rayOrigin += rayDirection * max(tNear - 0.001, 0.0); // Ensure tNear is non-negative
-    
+
     // Perform ray marching from the AABB intersection point
     fragmentColor = vec4(ray_march(rayOrigin, rayDirection), 1.0);
 }

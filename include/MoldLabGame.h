@@ -6,7 +6,19 @@
 #include "GameEngine.h"
 #include "ShaderVariable.h"
 
-constexpr int GRID_SIZE = 8;
+constexpr int GRID_SIZE = 35;
+constexpr float ROTATION_SPEED =  35.0f;
+constexpr int WORK_GROUP_SIZE = 8;
+
+struct InputState {
+    bool isDPressed = false;
+    bool isAPressed = false;
+    bool isLeftPressed = false;
+    bool isRightPressed = false;
+    bool isUpPressed = false;
+    bool isDownPressed = false;
+};
+
 
 class MoldLabGame : public GameEngine {
 public:
@@ -14,6 +26,7 @@ public:
     ~MoldLabGame() override;
 
 protected:
+    // Core functions
     void renderingStart() override;
     void start() override;
     void update(float deltaTime) override;
@@ -32,6 +45,20 @@ private:
     float verticalAngle = 0.0f;   // Rotation angle around the X-axis
     float orbitRadius = 10.0f;    // Distance from the origin
     float rotationSpeed = 1.0f;   // Speed of rotation
+
+    InputState inputState;
+
+    // Initialization Functions
+    void initializeShaders();
+    void initializeUniformVariables();
+    void initializeVertexBuffers();
+    void initializeVoxelGridBuffer();
+
+    // Update Helpers
+    void HandleCameraMovement(float orbitRadius, float deltaTime);
+    void UpdateTestValue(float deltaTime) const;
+    void DispatchComputeShaders() const;
+
 };
 
 #endif // MOLDLABGAME_H

@@ -23,6 +23,17 @@ GameEngine::~GameEngine() {
     glfwTerminate();
 }
 
+void GameEngine::printFramerate(float& frameTimeAccumulator, int& frameCount) {
+    if (displayFramerate && frameTimeAccumulator >= 1.0f) {
+        float averageFrameRate = frameCount / frameTimeAccumulator;
+        std::cout << "Average Frame Rate: " << averageFrameRate << " FPS" << std::endl;
+
+        frameCount = 0;
+        frameTimeAccumulator = 0.0f;
+    }
+}
+
+
 void GameEngine::run() {
     renderingStart();
     start();
@@ -37,25 +48,16 @@ void GameEngine::run() {
         lastFrameTime = currentTime;
 
         timeSinceStart += deltaTime;
-
         frameCount++;
         frameTimeAccumulator += deltaTime;
+        printFramerate(frameTimeAccumulator, frameCount);
 
         inputManager.handleInput(window); // Process inputs
         update(deltaTime);
+
+        glClear(GL_COLOR_BUFFER_BIT); // Clear the screen buffer
+
         render();
-
-        // print framerate
-        if (displayFramerate && frameTimeAccumulator >= 1.0f) {
-            float averageFrameRate = frameCount / frameTimeAccumulator;
-            std::cout << "Average Frame Rate: " << averageFrameRate << " FPS" << std::endl;
-
-            // Reset for the next second
-            frameCount = 0;
-            frameTimeAccumulator = 0.0f;
-        }
-
-
 
         // Swap buffers and poll events
         glfwSwapBuffers(window);

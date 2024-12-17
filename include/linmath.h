@@ -78,6 +78,12 @@ LINMATH_H_FUNC void vec3_mul_cross(vec3 r, vec3 const a, vec3 const b)
 	r[2] = a[0]*b[1] - a[1]*b[0];
 }
 
+LINMATH_H_FUNC void set_vec3(vec3 v, float x, float y, float z) {
+	v[0] = x;
+	v[1] = y;
+	v[2] = z;
+}
+
 LINMATH_H_FUNC void vec3_reflect(vec3 r, vec3 const v, vec3 const n)
 {
 	float p = 2.f * vec3_mul_inner(v, n);

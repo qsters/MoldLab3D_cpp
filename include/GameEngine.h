@@ -54,6 +54,7 @@ private:
     // Core initialization
     void init();
     void initGLFW();
+    void printFramerate(float& frameTimeAccumulator, int& frameCount);
 
     // Window and context
     GLFWwindow* window;
