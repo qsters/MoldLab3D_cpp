@@ -121,9 +121,11 @@ vec3 calculage_lighting(in vec3 rayOrigin, in vec3 current_position) {
     vec3 ambient = 0.1 * lightColor; // Ambient lighting
     vec3 diffuse = diff * lightColor; // Diffuse lighting
 
-    vec3 color = diffuse + ambient ; // Combine all light components
+    vec3 light = diffuse + ambient ; // Combine all light components
 
-    return color * objectColor; // Multiply by object color
+    vec3 gradient = current_position / vec3(gridSize);
+
+    return gradient; // Multiply by object color
 }
 
 bool outside_AABB(in vec3 position) {
@@ -142,7 +144,7 @@ vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
         vec3 current_position = rayOrigin + total_distance_traveled * rayDirection;
 
         if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE) {
-            return vec3(1 - (i / float(NUMBER_OF_STEPS)), 0.0, 0.0);
+            return vec3(0.0, 0.0, 0.0);
         }
 
         float distance_to_closest = map_the_world(current_position);
@@ -183,14 +185,12 @@ void main() {
     float tNear;
     // Cull rays that don't intersect the AABB
     if (!intersectsAABB(rayOrigin, rayDirection, gridMin, gridMax, tNear)) {
-        fragmentColor = vec4(0.0, 0.0, 1.0, 1.0); // Background color
+        fragmentColor = vec4(0.0, 0.0, 0.0, 1.0); // Background color
         return;
     }
     // Advance the ray origin to the intersection point with the AABB
     rayOrigin += rayDirection * max(tNear - 0.001, 0.0); // Ensure tNear is non-negative
-
-
-
+    
     // Perform ray marching from the AABB intersection point
     fragmentColor = vec4(ray_march(rayOrigin, rayDirection), 1.0);
 }
