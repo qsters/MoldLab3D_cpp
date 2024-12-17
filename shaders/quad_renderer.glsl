@@ -56,14 +56,19 @@ float smooth_max(float a, float b, float k) {
     return max(a, b) + h * h * k * 0.25;
 }
 
-// Map function to define the scene
+
 float map_the_world(in vec3 point) {
     float result = 1e6; // Start with a very large value (infinite distance)
+    const int searchRadius = 2; // Local cube radius (adjustable)
 
-    for (int x = 0; x < gridSize; ++x) {
-        for (int y = 0; y < gridSize; ++y) {
-            for (int z = 0; z < gridSize; ++z) {
-                int idx = x + gridSize * (y + gridSize * z); // index for flattened 3d array
+    // Convert point to grid coordinates
+    ivec3 center = ivec3(floor(point / testValue));
+
+    // Iterate only within a cube around the ray's current position
+    for (int x = max(center.x - searchRadius, 0); x <= min(center.x + searchRadius, gridSize - 1); x++) {
+        for (int y = max(center.y - searchRadius, 0); y <= min(center.y + searchRadius, gridSize - 1); y++) {
+            for (int z = max(center.z - searchRadius, 0); z <= min(center.z + searchRadius, gridSize - 1); z++) {
+                int idx = x + gridSize * (y + gridSize * z); // Index for flattened 3D array
 
                 // Skip zero-sized cubes
                 if (voxelData[idx] <= 0.01) continue;
@@ -81,6 +86,7 @@ float map_the_world(in vec3 point) {
     }
     return result; // Return the minimum distance for the scene
 }
+
 
 // Calculate the normal at a point on the surface
 vec3 calculate_normal(in vec3 point) {
@@ -111,15 +117,24 @@ vec3 calculage_lighting(in vec3 rayOrigin, in vec3 current_position) {
     return color * objectColor; // Multiply by object color
 }
 
+bool outside_AABB(in vec3 position) {
+    float distance_to_grid = distance_from_cube(position, focusPoint, gridSize + AABB_offset.x * 5.0);
+    return distance_to_grid > 0.001;
+}
+
 // Perform ray marching to find intersections with the scene
 vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
     float total_distance_traveled = 0.0;
-    const int NUMBER_OF_STEPS = 100;
+    const int NUMBER_OF_STEPS = 150;
     const float MINIMUM_HIT_DISTANCE = 0.01;
     const float MAXIMUM_TRACE_DISTANCE = 50.0;
 
     for (int i = 0; i < NUMBER_OF_STEPS; ++i) {
         vec3 current_position = rayOrigin + total_distance_traveled * rayDirection;
+
+        if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE) {
+            return vec3(1 - (i / float(NUMBER_OF_STEPS)), 0.0, 0.0);
+        }
 
         float distance_to_closest = map_the_world(current_position);
 
@@ -127,9 +142,6 @@ vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
             return calculage_lighting(rayOrigin, current_position);
         }
 
-        if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE) {
-            return vec3(1 - (i / float(NUMBER_OF_STEPS)), 0.0, 0.0);
-        }
         total_distance_traveled += distance_to_closest;
     }
     return vec3(0.0); // Background color (black)
@@ -162,11 +174,13 @@ void main() {
     float tNear;
     // Cull rays that don't intersect the AABB
     if (!intersectsAABB(rayOrigin, rayDirection, gridMin, gridMax, tNear)) {
-        fragmentColor = vec4(1.0, 0.0, 0.0, 0.0); // Background color
+        fragmentColor = vec4(0.0, 0.0, 1.0, 1.0); // Background color
         return;
     }
     // Advance the ray origin to the intersection point with the AABB
-    rayOrigin += rayDirection * max(tNear, 0.0); // Ensure tNear is non-negative
+    rayOrigin += rayDirection * max(tNear - 0.001, 0.0); // Ensure tNear is non-negative
+
+
 
     // Perform ray marching from the AABB intersection point
     fragmentColor = vec4(ray_march(rayOrigin, rayDirection), 1.0);
