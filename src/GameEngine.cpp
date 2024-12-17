@@ -120,6 +120,7 @@ std::pair<std::string, std::string> GameEngine::LoadCombinedShaderSource(const s
 GLuint GameEngine::CompileShader(const std::string& source, GLenum shader_type) {
     GLuint shader = glCreateShader(shader_type);
     const char* source_cstr = source.c_str();
+
     glShaderSource(shader, 1, &source_cstr, nullptr);
     glCompileShader(shader);
 
@@ -128,22 +129,13 @@ GLuint GameEngine::CompileShader(const std::string& source, GLenum shader_type) 
     if (!success) {
         char infoLog[512];
         glGetShaderInfoLog(shader, 512, nullptr, infoLog);
-        std::cerr << "Shader Compilation Error: " << infoLog << std::endl;
+        std::cerr << source << " -- Shader Compilation Error: " << infoLog << std::endl;
         exit(EXIT_FAILURE);
     }
 
     return shader;
 }
 
-void GameEngine::CheckShaderCompilation(GLuint shader) {
-    GLint success;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        char infoLog[512];
-        glGetShaderInfoLog(shader, 512, nullptr, infoLog);
-        std::cerr << "ERROR::SHADER::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-}
 
 void GameEngine::CheckProgramLinking(GLuint program) {
     GLint success;
@@ -164,7 +156,7 @@ void GameEngine::initGLFW() {
         exit(EXIT_FAILURE);
     }
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 

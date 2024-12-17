@@ -80,7 +80,7 @@ float map_the_world(in vec3 point) {
                 float cube = distance_from_cube(point, gridPoint, voxelData[idx]);
 
                 // Combine distances using smooth_min for blending
-                result = smooth_min(result, cube, 0.55);
+                result = smooth_min(result, cube, .75);
             }
         }
     }

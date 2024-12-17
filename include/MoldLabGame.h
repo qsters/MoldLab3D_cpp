@@ -6,7 +6,7 @@
 #include "GameEngine.h"
 #include "ShaderVariable.h"
 
-constexpr int GRID_SIZE = 10;
+constexpr int GRID_SIZE = 8;
 
 class MoldLabGame : public GameEngine {
 public:
@@ -21,7 +21,7 @@ protected:
 
 private:
     GLuint triangleVbo = 0, triangleVao = 0, voxelGridBuffer = 0;
-    GLuint shaderProgram = 0;
+    GLuint shaderProgram = 0, growSporesShaderProgram = 0;
     ShaderVariable<vec3> cameraPositionSV, focusPointSV;
     ShaderVariable<int> gridSizeSV;
     ShaderVariable<float> testValueSV;

@@ -24,7 +24,6 @@ public:
     static std::pair<std::string, std::string> LoadCombinedShaderSource(const std::string& filepath);
     static GLuint CompileShader(const std::string& source, GLenum shader_type);
 
-    static void CheckShaderCompilation(GLuint shader);
     static void CheckProgramLinking(GLuint program);
 
     // Error catcher helper function
