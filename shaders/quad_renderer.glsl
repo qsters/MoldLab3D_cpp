@@ -46,6 +46,15 @@ float distance_from_cube(in vec3 point, in vec3 center, in float sideLength) {
     return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0);
 }
 
+float distance_from_rounded_cube(in vec3 point, in vec3 center, in float sideLength, float radius) {
+    // Compute the half-size of the cube
+    float halfSize = mix(0, maxCubeSideLength, sideLength) * 0.5;
+
+    // Distance to the surface of the box minus the rounding radius
+    vec3 d = abs(point - center) - vec3(halfSize - radius);
+    return length(max(d, 0.0)) - radius;
+}
+
 float smooth_min(float a, float b, float k) {
     float h = max(k - abs(a - b), 0.0) / k;
     return min(a, b) - h * h * k * 0.25;
@@ -62,7 +71,7 @@ float map_the_world(in vec3 point) {
     const int searchRadius = 2; // Local cube radius (adjustable)
 
     // Convert point to grid coordinates
-    ivec3 center = ivec3(floor(point / testValue));
+    ivec3 center = ivec3(floor(point));
 
     // Iterate only within a cube around the ray's current position
     for (int x = max(center.x - searchRadius, 0); x <= min(center.x + searchRadius, gridSize - 1); x++) {
@@ -74,13 +83,13 @@ float map_the_world(in vec3 point) {
                 if (voxelData[idx] <= 0.01) continue;
 
                 // Calculate the grid position
-                vec3 gridPoint = vec3(float(x), float(y), float(z)) * testValue;
+                vec3 gridPoint = vec3(float(x), float(y), float(z));
 
                 // Calculate the distance to the cube at this grid point
                 float cube = distance_from_cube(point, gridPoint, voxelData[idx]);
 
                 // Combine distances using smooth_min for blending
-                result = smooth_min(result, cube, .75);
+                result = smooth_min(result, cube, 0.55);
             }
         }
     }
