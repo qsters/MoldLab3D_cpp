@@ -68,7 +68,7 @@ private:
     // Update Helpers
     void HandleCameraMovement(float orbitRadius, float deltaTime);
     void UpdateTestValue(float deltaTime) const;
-    void DispatchComputeShaders() const;
+    void DispatchComputeShaders();
 
 };
 

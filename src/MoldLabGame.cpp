@@ -17,6 +17,8 @@ MoldLabGame::~MoldLabGame() {
     if (triangleVbo) glDeleteBuffers(1, &triangleVbo);
     if (triangleVao) glDeleteVertexArrays(1, &triangleVao);
     if (voxelGridBuffer) glDeleteBuffers(1, &voxelGridBuffer);
+    if (sporesBuffer) glDeleteBuffers(1, &sporesBuffer);
+    if (simulationSettingsBuffer) glDeleteBuffers(1, &simulationSettingsBuffer);
     std::cout << "Exiting..." << std::endl;
 }
 
@@ -93,38 +95,7 @@ void MoldLabGame::initializeVoxelGridBuffer() {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind buffer
 }
 
-void ComputeShaderInitializationDebug() {
-    const GLubyte* version = glGetString(GL_VERSION);
-    std::cout << "OpenGL Version: " << version << std::endl;
 
-    if (GLVersion.major >= 4 && GLVersion.minor >= 3) {
-        std::cout << "Compute Shaders Supported!" << std::endl;
-
-        // Check the maximum compute work group counts
-        GLint workGroupCount[3];
-        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &workGroupCount[0]);
-        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &workGroupCount[1]);
-        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &workGroupCount[2]);
-
-        std::cout << "Max Compute Work Group Count: "
-                  << workGroupCount[0] << ", "
-                  << workGroupCount[1] << ", "
-                  << workGroupCount[2] << std::endl;
-
-        // Check the maximum work group size
-        GLint workGroupSize[3];
-        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &workGroupSize[0]);
-        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &workGroupSize[1]);
-        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &workGroupSize[2]);
-
-        std::cout << "Max Compute Work Group Size: "
-                  << workGroupSize[0] << ", "
-                  << workGroupSize[1] << ", "
-                  << workGroupSize[2] << std::endl;
-    } else {
-        std::cerr << "Compute Shaders Not Supported!" << std::endl;
-    }
-}
 
 void MoldLabGame::initializeSimulationBuffers() {
     glGenBuffers(1, &sporesBuffer);
@@ -207,25 +178,8 @@ void MoldLabGame::UpdateTestValue(float deltaTime) const {
 }
 
 
-void MoldLabGame::DispatchComputeShaders() const {
-
-    glUseProgram(drawSporesShaderProgram);
-
-    // Pass the grid size and time uniform values
-    glUniform1i(glGetUniformLocation(drawSporesShaderProgram, "gridSize"), GRID_SIZE);
-    glUniform1f(glGetUniformLocation(drawSporesShaderProgram, "time"), TimeSinceStart());
-
-    // Dispatch the compute shader
-    int groupCount = (SPORE_COUNT + WORK_GROUP_SIZE - 1) / WORK_GROUP_SIZE; // Ensure proper division for grid
-    glDispatchCompute(groupCount, 1, 1);
-
-    GLenum err;
-    while ((err = glGetError()) != GL_NO_ERROR) {
-        std::cerr << "OpenGL Error: " << err << std::endl;
-    }
-
-    // Ensure the compute shader writes finish before proceeding
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+void MoldLabGame::DispatchComputeShaders() {
+    DispatchComputeShader(drawSporesShaderProgram, SPORE_COUNT, 1, 1);
 }
 
 
@@ -234,8 +188,6 @@ void MoldLabGame::DispatchComputeShaders() const {
 // Core Lifecycle Functions
 // ============================
 void MoldLabGame::renderingStart() {
-    ComputeShaderInitializationDebug();
-
     initializeShaders();
 
     initializeUniformVariables();

@@ -41,8 +41,18 @@ protected:
     [[nodiscard]] int getScreenWidth() const;
     [[nodiscard]] int getScreenHeight() const;
 
+    [[nodiscard]] int getMaxWorkGroupCountX() const;
+    [[nodiscard]] int getMaxWorkGroupCountY() const;
+    [[nodiscard]] int getMaxWorkGroupCountZ() const;
+
+    [[nodiscard]] int getMaxWorkGroupSizeX() const;
+    [[nodiscard]] int getMaxWorkGroupSizeY() const;
+    [[nodiscard]] int getMaxWorkGroupSizeZ() const;
+
     [[nodiscard]] float TimeSinceStart() const;
     [[nodiscard]] float DeltaTime() const;
+
+    void DispatchComputeShader(GLuint computeShaderProgram, int itemsX, int itemsY, int itemsZ);
 
     bool displayFramerate = false;
     InputManager inputManager;
@@ -54,7 +64,9 @@ private:
     // Core initialization
     void init();
     void initGLFW();
+
     void printFramerate(float& frameTimeAccumulator, int& frameCount);
+    void ComputeShaderInitializationAndCheck();
 
     // Window and context
     GLFWwindow* window;
@@ -65,6 +77,9 @@ private:
     float lastFrameTime;
     float deltaTime;
     float timeSinceStart;
+
+    int maxWorkGroupCountX, maxWorkGroupCountY, maxWorkGroupCountZ;
+    int maxWorkGroupSizeX, maxWorkGroupSizeY, maxWorkGroupSizeZ;
 
 
 

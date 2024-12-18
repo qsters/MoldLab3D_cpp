@@ -14,6 +14,7 @@ GameEngine::GameEngine(const int width, const int height, std::string  title)
 
 void GameEngine::init() {
     initGLFW();
+    ComputeShaderInitializationAndCheck();
 }
 
 GameEngine::~GameEngine() {
@@ -218,4 +219,119 @@ float GameEngine::DeltaTime() const {
 
 float GameEngine::TimeSinceStart() const {
     return timeSinceStart;
+}
+
+void GameEngine::ComputeShaderInitializationAndCheck() {
+    const GLubyte* version = glGetString(GL_VERSION);
+    std::cout << "OpenGL Version: " << version << std::endl;
+
+    if (GLVersion.major >= 4 && GLVersion.minor >= 3) {
+        std::cout << "Compute Shaders Supported!" << std::endl;
+
+        // Check the maximum compute work group counts
+        GLint workGroupCount[3];
+        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &workGroupCount[0]);
+        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &workGroupCount[1]);
+        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &workGroupCount[2]);
+
+        std::cout << "Max Compute Work Group Count: "
+                  << workGroupCount[0] << ", "
+                  << workGroupCount[1] << ", "
+                  << workGroupCount[2] << std::endl;
+
+        maxWorkGroupCountX = workGroupCount[0];
+        maxWorkGroupCountY = workGroupCount[1];
+        maxWorkGroupCountZ = workGroupCount[2];
+
+        // Check the maximum work group size
+        GLint workGroupSize[3];
+        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &workGroupSize[0]);
+        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &workGroupSize[1]);
+        glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &workGroupSize[2]);
+
+        std::cout << "Max Compute Work Group Size: "
+                  << workGroupSize[0] << ", "
+                  << workGroupSize[1] << ", "
+                  << workGroupSize[2] << std::endl;
+
+        maxWorkGroupSizeX = workGroupSize[0];
+        maxWorkGroupSizeY = workGroupSize[1];
+        maxWorkGroupSizeZ = workGroupSize[2];
+    } else {
+        throw std::runtime_error("Compute Shaders Not Supported! Program cannot continue.");
+    }
+}
+
+int GameEngine::getMaxWorkGroupCountX() const {
+    return maxWorkGroupCountX;
+}
+
+int GameEngine::getMaxWorkGroupCountY() const {
+    return maxWorkGroupCountY;
+}
+
+int GameEngine::getMaxWorkGroupCountZ() const {
+    return maxWorkGroupCountZ;
+}
+
+int GameEngine::getMaxWorkGroupSizeX() const {
+    return maxWorkGroupSizeX;
+}
+
+int GameEngine::getMaxWorkGroupSizeY() const {
+    return maxWorkGroupSizeY;
+}
+
+int GameEngine::getMaxWorkGroupSizeZ() const {
+    return maxWorkGroupSizeZ;
+}
+
+void GameEngine::DispatchComputeShader(GLuint computeShaderProgram,
+                                       int itemsX, int itemsY, int itemsZ) {
+    if (itemsX < 1 || itemsY < 1 || itemsZ < 1) {
+        throw std::runtime_error("Dispatch item must be above 0");
+    }
+
+    // Bind the compute shader program
+    glUseProgram(computeShaderProgram);
+
+    // Get the local work group sizes
+    GLint localSize[3];
+    glGetProgramiv(computeShaderProgram, GL_COMPUTE_WORK_GROUP_SIZE, localSize);
+
+    int localSizeX = localSize[0];
+    int localSizeY = localSize[1];
+    int localSizeZ = localSize[2];
+
+    // Calculate the number of work groups required for each dimension
+    int workGroupCountX = (itemsX + localSizeX - 1) / localSizeX; // ceil(itemsX / localSizeX)
+    int workGroupCountY = (itemsY + localSizeY - 1) / localSizeY;
+    int workGroupCountZ = (itemsZ + localSizeZ - 1) / localSizeZ;
+
+    // Validate against maximum work group count bounds
+    if (workGroupCountX > maxWorkGroupCountX ||
+        workGroupCountY > maxWorkGroupCountY ||
+        workGroupCountZ > maxWorkGroupCountZ) {
+        throw std::runtime_error("Dispatch exceeds maximum work group counts.");
+        }
+
+    // Validate against maximum local work group size bounds
+    if (localSizeX > maxWorkGroupSizeX ||
+        localSizeY > maxWorkGroupSizeY ||
+        localSizeZ > maxWorkGroupSizeZ) {
+        throw std::runtime_error("Compute shader local size exceeds maximum limits.");
+        }
+
+    // Dispatch the compute shader
+    glDispatchCompute(workGroupCountX, workGroupCountY, workGroupCountZ);
+
+    // Check for errors
+    GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cerr << "OpenGL Error: " << err << std::endl;
+        throw std::runtime_error("Error occurred during compute shader dispatch.");
+    }
+
+    // Ensure the compute shader completes before continuing
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
