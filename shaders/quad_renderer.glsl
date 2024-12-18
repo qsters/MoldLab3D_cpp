@@ -148,7 +148,7 @@ vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
         vec3 current_position = rayOrigin + total_distance_traveled * rayDirection;
 
         if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE) {
-            return vec3(0.0, 0.0, 0.0);
+            return vec3(1.0, 0.0, 0.0);
         }
 
         float distance_to_closest = map_the_world(current_position);

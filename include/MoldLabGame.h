@@ -5,8 +5,16 @@
 
 #include "GameEngine.h"
 #include "ShaderVariable.h"
+#include "SimulationData.h"
 
 constexpr int GRID_SIZE = 35;
+constexpr int SPORE_COUNT = 300;
+constexpr float SPORE_SPEED = 3;
+constexpr float SPORE_DECAY = 0.1;
+constexpr float SPORE_SENSOR_DISTANCE = 5.0;
+constexpr float SPORE_TURN_SPEED = 5.0;
+
+
 constexpr float ROTATION_SPEED =  35.0f;
 constexpr int WORK_GROUP_SIZE = 8;
 
@@ -33,13 +41,15 @@ protected:
     void render() override;
 
 private:
-    GLuint triangleVbo = 0, triangleVao = 0, voxelGridBuffer = 0;
-    GLuint shaderProgram = 0, growSporesShaderProgram = 0;
+    GLuint triangleVbo = 0, triangleVao = 0, voxelGridBuffer = 0, simulationSettingsBuffer = 0, sporesBuffer = 0;
+    GLuint shaderProgram = 0, drawSporesShaderProgram = 0;
     ShaderVariable<vec3> cameraPositionSV, focusPointSV;
     ShaderVariable<int> gridSizeSV;
     ShaderVariable<float> testValueSV;
 
     float voxelGrid[GRID_SIZE][GRID_SIZE][GRID_SIZE];
+    Spore spores[SPORE_COUNT];
+    SimulationSettings simulationSettings;
 
     float horizontalAngle = 90.0f; // Rotation angle around the Y-axis
     float verticalAngle = 0.0f;   // Rotation angle around the X-axis
@@ -53,6 +63,7 @@ private:
     void initializeUniformVariables();
     void initializeVertexBuffers();
     void initializeVoxelGridBuffer();
+    void initializeSimulationBuffers();
 
     // Update Helpers
     void HandleCameraMovement(float orbitRadius, float deltaTime);

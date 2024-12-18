@@ -25,7 +25,8 @@ add_executable(MoldLab3D ${SRC_FILES}
         src/ShaderVariable.cpp
         src/InputManager.cpp
         include/InputManager.h
-        include/MeshData.h)
+        include/MeshData.h
+        include/SimulationData.h)
 
 # Find and link libraries
 find_package(OpenGL REQUIRED)

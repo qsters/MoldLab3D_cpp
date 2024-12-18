@@ -8,7 +8,6 @@
 // Constructor/Destructor
 // ============================
 
-
 MoldLabGame::MoldLabGame(int width, int height, const std::string& title)
 : GameEngine(width, height, title), voxelGrid{} {
     displayFramerate = true;
@@ -26,7 +25,7 @@ MoldLabGame::~MoldLabGame() {
 // ============================
 void MoldLabGame::initializeShaders() {
     // Load and compile shaders
-    auto [vertexShaderCode, fragmentShaderCode] = MoldLabGame::LoadCombinedShaderSource("shaders/quad_renderer.glsl");
+    auto [vertexShaderCode, fragmentShaderCode] = LoadCombinedShaderSource("shaders/quad_renderer.glsl");
 
     GLuint vertexShader = CompileShader(vertexShaderCode, GL_VERTEX_SHADER);
 
@@ -39,14 +38,12 @@ void MoldLabGame::initializeShaders() {
     glLinkProgram(shaderProgram);
     CheckProgramLinking(shaderProgram);
 
-    std::string growSporesShaderRaw = LoadShaderSource("shaders/grow_spores.glsl");
+    GLuint growsSporesShader = CompileShader(LoadShaderSource("shaders/draw_spores.glsl"), GL_COMPUTE_SHADER);
 
-    GLuint growsSporesShader = CompileShader(growSporesShaderRaw, GL_COMPUTE_SHADER);
-
-    growSporesShaderProgram = glCreateProgram();
-    glAttachShader(growSporesShaderProgram, growsSporesShader);
-    glLinkProgram(growSporesShaderProgram);
-    CheckProgramLinking(growSporesShaderProgram);
+    drawSporesShaderProgram = glCreateProgram();
+    glAttachShader(drawSporesShaderProgram, growsSporesShader);
+    glLinkProgram(drawSporesShaderProgram);
+    CheckProgramLinking(drawSporesShaderProgram);
 }
 
 void MoldLabGame::initializeUniformVariables() {
@@ -80,6 +77,14 @@ void MoldLabGame::initializeVertexBuffers() {
 }
 
 void MoldLabGame::initializeVoxelGridBuffer() {
+    for (int x = 0; x < GRID_SIZE; x++) {
+        for (int y = 0; y < GRID_SIZE; y++) {
+            for (int z = 0; z < GRID_SIZE; z++) {
+                voxelGrid[x][y][z] = 0.0f;
+            }
+        }
+    }
+
     // ** Create Voxel Grid Buffer **
     glGenBuffers(1, &voxelGridBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, voxelGridBuffer);
@@ -120,6 +125,23 @@ void ComputeShaderInitializationDebug() {
         std::cerr << "Compute Shaders Not Supported!" << std::endl;
     }
 }
+
+void MoldLabGame::initializeSimulationBuffers() {
+    glGenBuffers(1, &sporesBuffer);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, sporesBuffer);
+glBufferData(GL_SHADER_STORAGE_BUFFER, SPORE_COUNT * sizeof(Spore), spores, GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, sporesBuffer); // Binding index 1 for spores
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
+
+    // **Settings Buffer**
+    glGenBuffers(1, &simulationSettingsBuffer);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, simulationSettingsBuffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(SimulationSettings), &simulationSettings, GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, simulationSettingsBuffer); // Binding index 2 for settings
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
+}
+
 
 
 // ============================
@@ -185,19 +207,17 @@ void MoldLabGame::UpdateTestValue(float deltaTime) const {
 }
 
 
-
-
 void MoldLabGame::DispatchComputeShaders() const {
 
-    glUseProgram(growSporesShaderProgram);
+    glUseProgram(drawSporesShaderProgram);
 
     // Pass the grid size and time uniform values
-    glUniform1i(glGetUniformLocation(growSporesShaderProgram, "gridSize"), GRID_SIZE);
-    glUniform1f(glGetUniformLocation(growSporesShaderProgram, "time"), TimeSinceStart());
+    glUniform1i(glGetUniformLocation(drawSporesShaderProgram, "gridSize"), GRID_SIZE);
+    glUniform1f(glGetUniformLocation(drawSporesShaderProgram, "time"), TimeSinceStart());
 
     // Dispatch the compute shader
-    int groupCount = (GRID_SIZE + WORK_GROUP_SIZE - 1) / WORK_GROUP_SIZE; // Ensure proper division for grid
-    glDispatchCompute(groupCount, groupCount, groupCount);
+    int groupCount = (SPORE_COUNT + WORK_GROUP_SIZE - 1) / WORK_GROUP_SIZE; // Ensure proper division for grid
+    glDispatchCompute(groupCount, 1, 1);
 
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
@@ -223,6 +243,40 @@ void MoldLabGame::renderingStart() {
     initializeVertexBuffers();
 
     initializeVoxelGridBuffer();
+
+    simulationSettings.spore_count = SPORE_COUNT;
+    simulationSettings.grid_size = GRID_SIZE;
+    simulationSettings.spore_speed = SPORE_SPEED;
+    simulationSettings.decay_speed = SPORE_DECAY;
+    simulationSettings.turn_speed = SPORE_TURN_SPEED;
+    simulationSettings.sensor_distance = SPORE_SENSOR_DISTANCE;
+
+    srand(static_cast<unsigned int>(time(0)));
+
+    for (int i = 0; i < SPORE_COUNT; i++) {
+        Spore spore;
+
+        // Random position between 0 and GRID_SIZE - 1
+        spore.position[0] = static_cast<float>(rand() % GRID_SIZE);
+        spore.position[1] = static_cast<float>(rand() % GRID_SIZE);
+        spore.position[2] = static_cast<float>(rand() % GRID_SIZE);
+
+        // Random direction vector (normalized)
+        float dirX = static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f; // Range [-1, 1]
+        float dirY = static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f;
+        float dirZ = static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f;
+
+        float magnitude = sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
+        spore.direction[0] = dirX / magnitude;
+        spore.direction[1] = dirY / magnitude;
+        spore.direction[2] = dirZ / magnitude;
+
+        // Padding
+        spores[i] = spore;
+    }
+
+
+    initializeSimulationBuffers();
 }
 
 void MoldLabGame::start() {
