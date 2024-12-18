@@ -93,6 +93,10 @@ float map_the_world(in vec3 point) {
             }
         }
     }
+
+    // Moves search radius if nothing has been encountered.
+    result = min(searchRadius, result);
+
     return result; // Return the minimum distance for the scene
 }
 
