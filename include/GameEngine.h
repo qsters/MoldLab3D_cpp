@@ -39,6 +39,7 @@ protected:
     virtual void start() = 0;
     virtual void update(float deltaTime) = 0;
     virtual void render() = 0;
+    virtual void renderUI() = 0;
 
     // Utility methods for derived classes
     [[nodiscard]] int getScreenWidth() const;

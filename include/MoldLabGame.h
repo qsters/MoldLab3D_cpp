@@ -41,6 +41,7 @@ protected:
     void start() override;
     void update(float deltaTime) override;
     void render() override;
+    void renderUI() override;
 
 private:
     GLuint triangleVbo = 0, triangleVao = 0, voxelGridBuffer = 0, simulationSettingsBuffer = 0, sporesBuffer = 0;

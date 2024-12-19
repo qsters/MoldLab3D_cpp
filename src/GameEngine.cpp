@@ -78,6 +78,7 @@ void GameEngine::run() {
         glClear(GL_COLOR_BUFFER_BIT); // Clear the screen buffer
 
         render();
+        renderUI();
 
         // Swap buffers and poll events
         glfwSwapBuffers(window);
