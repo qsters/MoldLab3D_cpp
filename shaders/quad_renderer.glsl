@@ -140,9 +140,9 @@ bool outside_AABB(in vec3 position) {
 // Perform ray marching to find intersections with the scene
 vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
     float total_distance_traveled = 0.0;
-    const int NUMBER_OF_STEPS = 150;
+    const int NUMBER_OF_STEPS = 100;
     const float MINIMUM_HIT_DISTANCE = 0.01;
-    const float MAXIMUM_TRACE_DISTANCE = 50.0;
+    const float MAXIMUM_TRACE_DISTANCE = gridSize * 1.5;
 
     for (int i = 0; i < NUMBER_OF_STEPS; ++i) {
         vec3 current_position = rayOrigin + total_distance_traveled * rayDirection;

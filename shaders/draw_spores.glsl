@@ -31,6 +31,9 @@ layout(std430, binding = 2) buffer SettingsBuffer {
     SimulationSettings settings;
 };
 
+
+
+
 void main() {
     uint sporeID = gl_GlobalInvocationID.x;
 
