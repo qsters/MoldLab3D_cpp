@@ -300,16 +300,9 @@ void MoldLabGame::render() {
 }
 
 void MoldLabGame::renderUI() {
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
     // Add sliders for test values or other parameters
     ImGui::Begin("Simulation Settings"); // Begin a window
     ImGui::SliderFloat("Test Value", &(*testValueSV.value), 0.0f, 10.0f); // Example slider
     ImGui::SliderFloat("Spore Speed", &simulationSettings.spore_speed, 0.0f, 10.0f);
     ImGui::End(); // End the window
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
