@@ -78,19 +78,19 @@ void main() {
 
     // Adjust direction based on sensed weights
     vec3 directionChange = vec3(0.0);
+    // If one of the
     if (forwardWeight < rightWeight || forwardWeight < leftWeight) {
-        if (rightWeight > leftWeight) {
-            directionChange += right;
-        } else if (leftWeight > rightWeight) {
-            directionChange -= right;
-        }
+        // Blend between -right and right based on the normalized weights
+        float weightSum = rightWeight + leftWeight;
+        vec3 horizontalDirection = mix(-right, right, rightWeight / weightSum);
+        directionChange += horizontalDirection;
     }
+
     if (forwardWeight < upWeight || forwardWeight < downWeight) {
-        if (upWeight > downWeight) {
-            directionChange += up;
-        } else if (downWeight > upWeight) {
-            directionChange -= up;
-        }
+        // Blend between -up and up based on the normalized weights
+        float weightSum = upWeight + downWeight;
+        vec3 verticalDirection = mix(-up, up, upWeight / weightSum);
+        directionChange += verticalDirection;
     }
 
     newDirection = normalize(forward + directionChange * settings.turn_speed * deltaTime);
