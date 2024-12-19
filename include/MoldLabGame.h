@@ -6,11 +6,9 @@
 #include "GameEngine.h"
 #include "ShaderVariable.h"
 #include "SimulationData.h"
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
 
-constexpr int GRID_SIZE = 70;
+
+constexpr int GRID_SIZE = 75;
 constexpr int SPORE_COUNT = 10'000;
 constexpr float SPORE_SPEED = 10;
 constexpr float SPORE_DECAY = 0.33;
@@ -48,7 +46,7 @@ private:
     GLuint shaderProgram = 0, drawSporesShaderProgram = 0, moveSporesShaderProgram = 0, decaySporesShaderProgram = 0;
     ShaderVariable<vec3> cameraPositionSV, focusPointSV;
     ShaderVariable<int> gridSizeSV;
-    ShaderVariable<float> testValueSV, moveDeltaTimeSV, decayDeltaTimeSV;
+    ShaderVariable<float> moveDeltaTimeSV, decayDeltaTimeSV;
 
     float voxelGrid[GRID_SIZE][GRID_SIZE][GRID_SIZE];
     Spore spores[SPORE_COUNT];
@@ -70,7 +68,6 @@ private:
 
     // Update Helpers
     void HandleCameraMovement(float orbitRadius, float deltaTime);
-    void UpdateTestValue(float deltaTime) const;
     void DispatchComputeShaders();
 
 };

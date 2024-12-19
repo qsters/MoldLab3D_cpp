@@ -3,6 +3,8 @@
 #include <cmath>
 #include "MoldLabGame.h"
 #include "MeshData.h"
+#include "imgui.h"
+
 
 // ============================
 // Constructor/Destructor
@@ -66,13 +68,11 @@ void MoldLabGame::initializeUniformVariables() {
     static vec3 cameraPosition = {GRID_SIZE / 2.0, GRID_SIZE * 1.4, GRID_SIZE * 1.4};
     static vec3 focusPoint = {0.0f, 0.0f, 0.0f};
     static int gridSize = GRID_SIZE;
-    static float testValue = 1.0f;
     static float deltaTimeStorage;
 
     cameraPositionSV = ShaderVariable(shaderProgram, &cameraPosition, "cameraPosition");
     focusPointSV = ShaderVariable(shaderProgram, &focusPoint, "focusPoint");
     gridSizeSV = ShaderVariable(shaderProgram, &gridSize, "gridSize");
-    testValueSV = ShaderVariable(shaderProgram, &testValue, "testValue");
     moveDeltaTimeSV = ShaderVariable(moveSporesShaderProgram, &deltaTimeStorage, "deltaTime");
     decayDeltaTimeSV = ShaderVariable(decaySporesShaderProgram, &deltaTimeStorage, "deltaTime");
 }
@@ -181,22 +181,6 @@ void MoldLabGame::HandleCameraMovement(float orbitRadius, float deltaTime) {
     set_vec3(*cameraPositionSV.value, focusPoint[0] + x, focusPoint[1] + y, focusPoint[2] + z);
 }
 
-void MoldLabGame::UpdateTestValue(float deltaTime) const {
-    float testScaler = 1.5f;
-    // Adjust testValueSV based on key state
-    float& testValue = *testValueSV.value; // Assume `testValueSV` is already initialized
-
-    if (inputState.isDPressed) {
-        testValue += deltaTime * testScaler; // Change rate is 1.0 units per second
-        std::cout << "Test value: " << testValue << std::endl;
-    }
-    if (inputState.isAPressed) {
-        testValue -= deltaTime * testScaler; // Same rate but in the opposite direction
-        std::cout << "Test value: " << testValue << std::endl;
-    }
-}
-
-
 void MoldLabGame::DispatchComputeShaders() {
     uploadSettingsBuffer(simulationSettingsBuffer, simulationSettings);
 
@@ -275,8 +259,6 @@ void MoldLabGame::start() {
 void MoldLabGame::update(float deltaTime) {
     HandleCameraMovement(GRID_SIZE * 1.3, deltaTime);
 
-    UpdateTestValue(deltaTime);
-
     *moveDeltaTimeSV.value = deltaTime;
     *decayDeltaTimeSV.value = deltaTime;
 
@@ -292,7 +274,6 @@ void MoldLabGame::render() {
     gridSizeSV.uploadToShader();
     cameraPositionSV.uploadToShader();
     focusPointSV.uploadToShader();
-    testValueSV.uploadToShader(true);
 
     // Draw the full-screen quad
     glBindVertexArray(triangleVao);
@@ -300,9 +281,13 @@ void MoldLabGame::render() {
 }
 
 void MoldLabGame::renderUI() {
+    ImGui::GetStyle().Alpha = 0.8f;
+
     // Add sliders for test values or other parameters
     ImGui::Begin("Simulation Settings"); // Begin a window
-    ImGui::SliderFloat("Test Value", &(*testValueSV.value), 0.0f, 10.0f); // Example slider
-    ImGui::SliderFloat("Spore Speed", &simulationSettings.spore_speed, 0.0f, 10.0f);
+    ImGui::SliderFloat("Spore Speed", &simulationSettings.spore_speed, 0.0f, 50.0f);
+    ImGui::SliderFloat("Turn Speed", &simulationSettings.turn_speed, 0.0f, 10.0f);
+    ImGui::SliderFloat("Decay Speed", &simulationSettings.decay_speed, 0.0f, 10.0f);
+    ImGui::SliderFloat("Sensor Distance", &simulationSettings.sensor_distance, 0.0f, GRID_SIZE / 4.0);
     ImGui::End(); // End the window
 }
