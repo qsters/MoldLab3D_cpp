@@ -6,6 +6,9 @@
 #include "GameEngine.h"
 #include "ShaderVariable.h"
 #include "SimulationData.h"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 constexpr int GRID_SIZE = 70;
 constexpr int SPORE_COUNT = 10'000;

@@ -8,6 +8,9 @@
 #include <string>
 #include "InputManager.h"
 
+
+
+
 // Abstract base class for game engines
 class GameEngine {
 public:
@@ -64,6 +67,8 @@ private:
     // Core initialization
     void init();
     void initGLFW();
+    void initImGui();
+
 
     void printFramerate(float& frameTimeAccumulator, int& frameCount);
     void ComputeShaderInitializationAndCheck();

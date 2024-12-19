@@ -281,6 +281,16 @@ void MoldLabGame::update(float deltaTime) {
 
 
 void MoldLabGame::render() {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    // Add sliders for test values or other parameters
+    ImGui::Begin("Simulation Settings"); // Begin a window
+    ImGui::SliderFloat("Test Value", &(*testValueSV.value), 0.0f, 10.0f); // Example slider
+    ImGui::SliderFloat("Spore Speed", &simulationSettings.spore_speed, 0.0f, 10.0f);
+    ImGui::End(); // End the window
+
     // While using the
     glUseProgram(shaderProgram);
 
@@ -292,4 +302,7 @@ void MoldLabGame::render() {
     // Draw the full-screen quad
     glBindVertexArray(triangleVao);
     glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }

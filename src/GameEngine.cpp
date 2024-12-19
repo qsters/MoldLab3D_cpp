@@ -1,5 +1,7 @@
 #include "GameEngine.h"
-#include <glad/glad.h>
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -14,10 +16,27 @@ GameEngine::GameEngine(const int width, const int height, std::string  title)
 
 void GameEngine::init() {
     initGLFW();
+    initImGui();
     ComputeShaderInitializationAndCheck();
 }
 
+void GameEngine::initImGui() {
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); // Configuration if needed
+
+    // Setup platform/renderer bindings
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 430"); // Match your OpenGL version
+}
+
+
 GameEngine::~GameEngine() {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+
     if (window) {
         glfwDestroyWindow(window);
     }
