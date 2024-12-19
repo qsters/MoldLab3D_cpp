@@ -46,6 +46,20 @@ void MoldLabGame::initializeShaders() {
     glAttachShader(drawSporesShaderProgram, growsSporesShader);
     glLinkProgram(drawSporesShaderProgram);
     CheckProgramLinking(drawSporesShaderProgram);
+
+    GLuint moveSporesShader = CompileShader(LoadShaderSource("shaders/move_spores.glsl"), GL_COMPUTE_SHADER);
+
+    moveSporesShaderProgram = glCreateProgram();
+    glAttachShader(moveSporesShaderProgram, moveSporesShader);
+    glLinkProgram(moveSporesShaderProgram);
+    CheckProgramLinking(moveSporesShaderProgram);
+
+    GLuint decaySporesShader = CompileShader(LoadShaderSource("shaders/decay_spores.glsl"),GL_COMPUTE_SHADER);
+
+    decaySporesShaderProgram = glCreateProgram();
+    glAttachShader(decaySporesShaderProgram, decaySporesShader);
+    glLinkProgram(decaySporesShaderProgram);
+    CheckProgramLinking(decaySporesShaderProgram);
 }
 
 void MoldLabGame::initializeUniformVariables() {
@@ -53,11 +67,14 @@ void MoldLabGame::initializeUniformVariables() {
     static vec3 focusPoint = {0.0f, 0.0f, 0.0f};
     static int gridSize = GRID_SIZE;
     static float testValue = 1.0f;
+    static float deltaTimeStorage;
 
     cameraPositionSV = ShaderVariable(shaderProgram, &cameraPosition, "cameraPosition");
     focusPointSV = ShaderVariable(shaderProgram, &focusPoint, "focusPoint");
     gridSizeSV = ShaderVariable(shaderProgram, &gridSize, "gridSize");
     testValueSV = ShaderVariable(shaderProgram, &testValue, "testValue");
+    moveDeltaTimeSV = ShaderVariable(moveSporesShaderProgram, &deltaTimeStorage, "deltaTime");
+    decayDeltaTimeSV = ShaderVariable(decaySporesShaderProgram, &deltaTimeStorage, "deltaTime");
 }
 
 
@@ -179,9 +196,19 @@ void MoldLabGame::UpdateTestValue(float deltaTime) const {
 
 
 void MoldLabGame::DispatchComputeShaders() {
+    glUseProgram(decaySporesShaderProgram);
+
+    decayDeltaTimeSV.uploadToShader();
+
+    DispatchComputeShader(decaySporesShaderProgram, GRID_SIZE, GRID_SIZE, GRID_SIZE);
+
+    glUseProgram(moveSporesShaderProgram);
+
+    moveDeltaTimeSV.uploadToShader();
+
+    DispatchComputeShader(moveSporesShaderProgram, SPORE_COUNT, 1, 1);
     DispatchComputeShader(drawSporesShaderProgram, SPORE_COUNT, 1, 1);
 }
-
 
 
 // ============================
@@ -245,6 +272,9 @@ void MoldLabGame::update(float deltaTime) {
     HandleCameraMovement(GRID_SIZE * 1.3, deltaTime);
 
     UpdateTestValue(deltaTime);
+
+    *moveDeltaTimeSV.value = deltaTime;
+    *decayDeltaTimeSV.value = deltaTime;
 
     DispatchComputeShaders();
 }

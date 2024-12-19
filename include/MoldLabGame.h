@@ -7,10 +7,10 @@
 #include "ShaderVariable.h"
 #include "SimulationData.h"
 
-constexpr int GRID_SIZE = 35;
-constexpr int SPORE_COUNT = 300;
-constexpr float SPORE_SPEED = 3;
-constexpr float SPORE_DECAY = 0.1;
+constexpr int GRID_SIZE = 70;
+constexpr int SPORE_COUNT = 10000;
+constexpr float SPORE_SPEED = 10;
+constexpr float SPORE_DECAY = 0.33;
 constexpr float SPORE_SENSOR_DISTANCE = 5.0;
 constexpr float SPORE_TURN_SPEED = 5.0;
 
@@ -42,10 +42,10 @@ protected:
 
 private:
     GLuint triangleVbo = 0, triangleVao = 0, voxelGridBuffer = 0, simulationSettingsBuffer = 0, sporesBuffer = 0;
-    GLuint shaderProgram = 0, drawSporesShaderProgram = 0;
+    GLuint shaderProgram = 0, drawSporesShaderProgram = 0, moveSporesShaderProgram = 0, decaySporesShaderProgram = 0;
     ShaderVariable<vec3> cameraPositionSV, focusPointSV;
     ShaderVariable<int> gridSizeSV;
-    ShaderVariable<float> testValueSV;
+    ShaderVariable<float> testValueSV, moveDeltaTimeSV, decayDeltaTimeSV;
 
     float voxelGrid[GRID_SIZE][GRID_SIZE][GRID_SIZE];
     Spore spores[SPORE_COUNT];
