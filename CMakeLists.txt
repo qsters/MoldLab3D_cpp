@@ -10,8 +10,9 @@ file(GLOB_RECURSE SRC_FILES src/*.cpp src/glad.c)
 
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/include/imgui)
 include_directories(C:/msys64/mingw64/include)
-include_directories(${CMAKE_SOURCE_DIR}/src)
+#include_directories(${CMAKE_SOURCE_DIR}/src)
 
 # Link directories
 link_directories(C:/msys64/mingw64/lib)
@@ -28,12 +29,12 @@ add_executable(MoldLab3D ${SRC_FILES}
         include/InputManager.h
         include/MeshData.h
         include/SimulationData.h
-        src/imgui.cpp            # ImGui source files
-        src/imgui_draw.cpp
-        src/imgui_widgets.cpp
-        src/imgui_impl_glfw.cpp
-        src/imgui_impl_opengl3.cpp
-        src/imgui_tables.cpp)
+        src/imgui/imgui.cpp            # ImGui source files
+        src/imgui/imgui_draw.cpp
+        src/imgui/imgui_widgets.cpp
+        src/imgui/imgui_impl_glfw.cpp
+        src/imgui/imgui_impl_opengl3.cpp
+        src/imgui/imgui_tables.cpp)
 
 # Find and link libraries
 find_package(OpenGL REQUIRED)
