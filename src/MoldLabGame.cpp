@@ -112,7 +112,14 @@ void MoldLabGame::initializeVoxelGridBuffer() {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind buffer
 }
 
+void uploadSettingsBuffer(GLuint simulationSettingsBuffer, SimulationSettings& settings) {
+    glGenBuffers(1, &simulationSettingsBuffer);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, simulationSettingsBuffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(SimulationSettings), &settings, GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, simulationSettingsBuffer); // Binding index 2 for settings
 
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
+}
 
 void MoldLabGame::initializeSimulationBuffers() {
     glGenBuffers(1, &sporesBuffer);
@@ -122,12 +129,7 @@ glBufferData(GL_SHADER_STORAGE_BUFFER, SPORE_COUNT * sizeof(Spore), spores, GL_D
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
 
     // **Settings Buffer**
-    glGenBuffers(1, &simulationSettingsBuffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, simulationSettingsBuffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(SimulationSettings), &simulationSettings, GL_STATIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, simulationSettingsBuffer); // Binding index 2 for settings
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
+    uploadSettingsBuffer(simulationSettingsBuffer, simulationSettings);
 }
 
 
@@ -196,6 +198,8 @@ void MoldLabGame::UpdateTestValue(float deltaTime) const {
 
 
 void MoldLabGame::DispatchComputeShaders() {
+    uploadSettingsBuffer(simulationSettingsBuffer, simulationSettings);
+
     glUseProgram(decaySporesShaderProgram);
 
     decayDeltaTimeSV.uploadToShader();
