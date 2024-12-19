@@ -27,7 +27,7 @@ MoldLabGame::~MoldLabGame() {
 // ============================
 void MoldLabGame::initializeShaders() {
     // Load and compile shaders
-    auto [vertexShaderCode, fragmentShaderCode] = LoadCombinedShaderSource("shaders/quad_renderer.glsl");
+    auto [vertexShaderCode, fragmentShaderCode] = LoadCombinedShaderSource("shaders/renderer.glsl");
 
     GLuint vertexShader = CompileShader(vertexShaderCode, GL_VERTEX_SHADER);
 
