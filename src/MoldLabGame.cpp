@@ -114,7 +114,7 @@ void MoldLabGame::initializeVoxelGridBuffer() {
     }
     constexpr GLsizeiptr voxelGridSize = sizeof(float) * GRID_SIZE * GRID_SIZE * GRID_SIZE;
 
-
+    std::cout << voxelGridSize << std::endl;
     // ** Create Voxel Grid Buffer **
     glGenBuffers(1, &voxelGridBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, voxelGridBuffer);
