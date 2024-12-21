@@ -28,12 +28,10 @@ vec3 lightPosition = vec3(-5, gridSize * 1.5f, -5); // Light above and slightly 
 vec3 lightColor = vec3(1.0, 1.0, 1.0);    // Pure white light
 vec3 objectColor = vec3(0.0, 1.0, 0.2);   // Reddish object
 
-float maxCubeSideLength = 0.9;
+float maxCubeSideLength = 1.0;
 
-vec3 gridMin = vec3(0.0);                // Slightly below the grid's minimum
-vec3 gridMax = vec3(gridSize - 1); // Slightly above the grid's maximum
 
-vec3 AABB_offset = vec3(0.51);
+
 
 // Define the voxel grid as a shader storage buffer
 layout(std430, binding = 0) buffer VoxelGrid {
@@ -89,7 +87,7 @@ float map_the_world(in vec3 point) {
                 float cube = distance_from_cube(point, gridPoint, voxelData[idx]);
 
                 // Combine distances using smooth_min for blending
-                result = smooth_min(result, cube, 0.55);
+                result = min(result, cube);
             }
         }
     }
@@ -132,22 +130,19 @@ vec3 calculage_lighting(in vec3 rayOrigin, in vec3 current_position) {
     return gradient; // Multiply by object color
 }
 
-bool outside_AABB(in vec3 position) {
-    float distance_to_grid = distance_from_cube(position, focusPoint, gridSize + AABB_offset.x * 5.0);
-    return distance_to_grid > 0.001;
-}
-
 // Perform ray marching to find intersections with the scene
 vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
     float total_distance_traveled = 0.0;
-    const int NUMBER_OF_STEPS = 100;
+    const int NUMBER_OF_STEPS = gridSize / 2;
     const float MINIMUM_HIT_DISTANCE = 0.01;
-    const float MAXIMUM_TRACE_DISTANCE = gridSize * 1.5;
+    // Diagonal of a cube side length * sqrt(3)
+    const float MAXIMUM_TRACE_DISTANCE = gridSize * 1.732;
 
     for (int i = 0; i < NUMBER_OF_STEPS; ++i) {
         vec3 current_position = rayOrigin + total_distance_traveled * rayDirection;
 
-        if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE) {
+        // If traveled too far, or exited the bounds, return red (for now)
+        if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE || distance_from_cube(current_position, focusPoint, gridSize) > 1) {
             return vec3(1.0, 0.0, 0.0);
         }
 
@@ -159,15 +154,12 @@ vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
 
         total_distance_traveled += distance_to_closest;
     }
-    return vec3(0.0); // Background color (black)
+    return vec3(1.0); // Background color (black)
 }
 
 bool intersectsAABB(vec3 rayOrigin, vec3 rayDirection, vec3 gridMin, vec3 gridMax, out float tNear) {
-    vec3 adjustedMin = gridMin - AABB_offset;
-    vec3 adjustedMax = gridMax + AABB_offset;
-
-    vec3 tMin = (adjustedMin - rayOrigin) / rayDirection;
-    vec3 tMax = (adjustedMax - rayOrigin) / rayDirection;
+    vec3 tMin = (gridMin - rayOrigin) / rayDirection;
+    vec3 tMax = (gridMax - rayOrigin) / rayDirection;
     vec3 t1 = min(tMin, tMax);
     vec3 t2 = max(tMin, tMax);
     tNear = max(max(t1.x, t1.y), t1.z);
@@ -185,6 +177,9 @@ void main() {
     // Ray origin and direction
     vec3 rayOrigin = cameraPosition;
     vec3 rayDirection = normalize(uv.x * right + uv.y * up + forward); // Combine screen-space uv with camera orientation
+
+    vec3 gridMin = vec3(0.0);
+    vec3 gridMax = vec3(gridSize - 1);
 
     float tNear;
     // Cull rays that don't intersect the AABB
