@@ -11,7 +11,11 @@
 // ============================
 
 MoldLabGame::MoldLabGame(int width, int height, const std::string& title)
-: GameEngine(width, height, title), voxelGrid{} {
+: GameEngine(width, height, title) {
+    voxelGrid = new float[GRID_SIZE * GRID_SIZE * GRID_SIZE]();
+    spores = new Spore[SPORE_COUNT]();
+
+
     displayFramerate = true;
 }
 
@@ -21,6 +25,10 @@ MoldLabGame::~MoldLabGame() {
     if (voxelGridBuffer) glDeleteBuffers(1, &voxelGridBuffer);
     if (sporesBuffer) glDeleteBuffers(1, &sporesBuffer);
     if (simulationSettingsBuffer) glDeleteBuffers(1, &simulationSettingsBuffer);
+
+    delete[] voxelGrid;
+    delete[] spores;
+
     std::cout << "Exiting..." << std::endl;
 }
 
@@ -99,15 +107,18 @@ void MoldLabGame::initializeVoxelGridBuffer() {
     for (int x = 0; x < GRID_SIZE; x++) {
         for (int y = 0; y < GRID_SIZE; y++) {
             for (int z = 0; z < GRID_SIZE; z++) {
-                voxelGrid[x][y][z] = 0.0f;
+                int idx = x + GRID_SIZE * (y + GRID_SIZE * z);
+                voxelGrid[idx] = 0.0f;
             }
         }
     }
+    constexpr GLsizeiptr voxelGridSize = sizeof(float) * GRID_SIZE * GRID_SIZE * GRID_SIZE;
+
 
     // ** Create Voxel Grid Buffer **
     glGenBuffers(1, &voxelGridBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, voxelGridBuffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(voxelGrid), voxelGrid, GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, voxelGridSize, voxelGrid, GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, voxelGridBuffer); // Binding index 0
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind buffer
 }
@@ -122,9 +133,12 @@ void uploadSettingsBuffer(GLuint simulationSettingsBuffer, SimulationSettings& s
 }
 
 void MoldLabGame::initializeSimulationBuffers() {
+    GLsizeiptr sporesSize = sizeof(Spore) * SPORE_COUNT;
+
+
     glGenBuffers(1, &sporesBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, sporesBuffer);
-glBufferData(GL_SHADER_STORAGE_BUFFER, SPORE_COUNT * sizeof(Spore), spores, GL_DYNAMIC_DRAW);
+glBufferData(GL_SHADER_STORAGE_BUFFER, sporesSize, spores, GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, sporesBuffer); // Binding index 1 for spores
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
 
@@ -211,6 +225,7 @@ void MoldLabGame::renderingStart() {
 
     initializeVoxelGridBuffer();
 
+
     simulationSettings.spore_count = SPORE_COUNT;
     simulationSettings.grid_size = GRID_SIZE;
     simulationSettings.spore_speed = SPORE_SPEED;
@@ -238,7 +253,6 @@ void MoldLabGame::renderingStart() {
         spore.direction[1] = dirY / magnitude;
         spore.direction[2] = dirZ / magnitude;
 
-        // Padding
         spores[i] = spore;
     }
 

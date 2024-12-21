@@ -8,8 +8,8 @@
 #include "SimulationData.h"
 
 
-constexpr int GRID_SIZE = 75;
-constexpr int SPORE_COUNT = 10'000;
+constexpr int GRID_SIZE = 500;
+constexpr int SPORE_COUNT = 10;
 constexpr float SPORE_SPEED = 10;
 constexpr float SPORE_DECAY = 0.33;
 constexpr float SPORE_SENSOR_DISTANCE = 10.0;
@@ -48,8 +48,10 @@ private:
     ShaderVariable<int> gridSizeSV;
     ShaderVariable<float> moveDeltaTimeSV, decayDeltaTimeSV;
 
-    float voxelGrid[GRID_SIZE][GRID_SIZE][GRID_SIZE];
-    Spore spores[SPORE_COUNT];
+    // Dynamically allocated to reduce Stack Memory, was causing issues at large values
+    float* voxelGrid = nullptr;
+    Spore* spores = nullptr;
+
     SimulationSettings simulationSettings;
 
     float horizontalAngle = 90.0f; // Rotation angle around the Y-axis
