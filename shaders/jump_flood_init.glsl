@@ -21,10 +21,8 @@ layout(std430, binding = 2) buffer SettingsBuffer {
     SimulationSettings settings;
 };
 
-// Make sure binding 3 is the current Read buffer when resetting it
-layout(std430, binding = 3) buffer SDFGrid {
-    vec4 sdfData[]; // 1D array for the reduced-resolution SDF grid
-};
+// Using image3D for SDF data
+layout(rgba32f, binding = 0) uniform writeonly image3D sdfData;
 
 
 void main() {
@@ -37,14 +35,17 @@ void main() {
     int reducedGridSize = settings.grid_size / sdfReductionFactor;
     int reducedIndex = reducedGridPos.x + reducedGridSize * (reducedGridPos.y + reducedGridSize * reducedGridPos.z);
 
+
     // Determine the corresponding high-resolution area to search
     ivec3 highGridStart = reducedGridPos * sdfReductionFactor;
     ivec3 highGridEnd = highGridStart + (sdfReductionFactor - 1);
 
+    highGridStart = clamp(highGridStart, ivec3(0), ivec3(settings.grid_size - 1));
+    highGridEnd = clamp(highGridEnd, ivec3(0), ivec3(settings.grid_size - 1));
+
+
     // Initialize the SDF cell as empty
     vec4 sdfEntry = vec4(-1.0, -1.0, -1.0, 1e6);
-
-
 
     // Search within the corresponding high-resolution area
     for (int z = highGridStart.z; z <= highGridEnd.z; ++z) {
@@ -66,6 +67,11 @@ void main() {
         if (sdfEntry.w == 0.0) break; // Exit the outer loop early
     }
 
+    // TODO: Remove, this is for testing
+//    if (reducedGridPos == ivec3(9, 9, 9)) {
+//        sdfEntry = vec4(reducedGridPos * sdfReductionFactor, 0.0); // Ensure (0, 0, 0) is defaulted if needed
+//    }
+
     // Write the result to the reduced SDF grid
-    sdfData[reducedIndex] = sdfEntry;
+    imageStore(sdfData, reducedGridPos, sdfEntry);
 }

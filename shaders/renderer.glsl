@@ -38,9 +38,8 @@ layout(std430, binding = 0) buffer VoxelGrid {
 };
 
 // After dispatching, buffer 4 is the data to read from for rendering
-layout(std430, binding = 4) buffer SDFGrid {
-    vec4 sdfData[];
-};
+layout(rgba32f, binding = 0) uniform readonly image3D sdfData;
+
 
 // Calculate the distance from a point to a cube centered at `c` with size `s`
 float distance_from_cube(in vec3 point, in vec3 center, in float sideLength) {
@@ -79,12 +78,14 @@ float map_the_world(in vec3 point) {
     for (int x = max(center.x - searchRadius, 0); x <= min(center.x + searchRadius, gridSize - 1); x++) {
         for (int y = max(center.y - searchRadius, 0); y <= min(center.y + searchRadius, gridSize - 1); y++) {
             for (int z = max(center.z - searchRadius, 0); z <= min(center.z + searchRadius, gridSize - 1); z++) {
-                int idx = x + gridSize * (y + gridSize * z); // Index for flattened 3D array
+                ivec3 searchPoint = ivec3(x, y, z) / sdfReductionFactor;
 
-                float voxelData = clamp(1 - (sdfData[idx].w / gridSize), 0.0, 1.0);
+                vec4 sdfValue = imageLoad(sdfData, searchPoint);
+
+                float voxelData = clamp(1 - (sdfValue.w / (float(gridSize))), 0.0, 1.0);
 
                 // Skip zero-sized cubes
-                if (voxelData <= 0.01) continue;
+                if (voxelData <= 0.01 || sdfValue.w >= 1e6) continue;
 
                 // Calculate the grid position
                 vec3 gridPoint = vec3(float(x), float(y), float(z));
@@ -220,16 +221,6 @@ void main() {
 
     // Advance the ray origin to the intersection point with the AABB
     rayOrigin += rayDirection * max(tNear - 0.001, 0.0); // Ensure tNear is non-negative
-
-    int reducedGridSize = gridSize / sdfReductionFactor;
-
-    // Convert the world-space point to reduced grid coordinates
-    vec3 reducedGridPoint = floor(focusPoint / float(sdfReductionFactor));
-
-    int x = int(reducedGridPoint.x);
-    int y = int(reducedGridPoint.y);
-    int z = int(reducedGridPoint.z);
-    int index = x + reducedGridSize * (y + reducedGridSize * z);
 
     // Perform ray marching from the AABB intersection point
     fragmentColor = vec4(ray_march(rayOrigin, rayDirection), 1.0);

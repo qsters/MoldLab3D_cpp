@@ -130,21 +130,18 @@ void MoldLabGame::initializeVoxelGridBuffer() {
 
 void MoldLabGame::initializeSDFBuffer() {
     int reducedGridSize = GRID_SIZE / SDF_REDUCTION_FACTOR;
-    GLsizeiptr sdfGridSize = sizeof(float) * reducedGridSize * reducedGridSize * reducedGridSize * 4;
 
+    if (GRID_SIZE % SDF_REDUCTION_FACTOR != 0) {
+        std::cerr << "Warning: GRID_SIZE is not evenly divisible by SDF_REDUCTION_FACTOR!" << std::endl;
+    }
 
+    glGenTextures(1, &sdfTexBuffer1);
+    glBindTexture(GL_TEXTURE_3D, sdfTexBuffer1);
+    glTexStorage3D(GL_TEXTURE_3D, 1, GL_RGBA32F, reducedGridSize, reducedGridSize, reducedGridSize);
 
-    glGenBuffers(1, &sdfBuffer1);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, sdfBuffer1);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sdfGridSize, nullptr, GL_STATIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, sdfBuffer1); // Binding index 0
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind buffer
-
-    glGenBuffers(1, &sdfBuffer2);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, sdfBuffer2);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sdfGridSize, nullptr, GL_STATIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, sdfBuffer2); // Binding index 0
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind buffer
+    glGenTextures(1, &sdfTexBuffer2);
+    glBindTexture(GL_TEXTURE_3D, sdfTexBuffer2);
+    glTexStorage3D(GL_TEXTURE_3D, 1, GL_RGBA32F, reducedGridSize, reducedGridSize, reducedGridSize);
 
 }
 
@@ -241,55 +238,45 @@ void MoldLabGame::DispatchComputeShaders() {
 
     glUseProgram(jumpFloodInitShaderProgram);
 
-    // Make sure buffers get reset
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, sdfBuffer1); // Read from sdfBuffer1
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, sdfBuffer2); // Write to sdfBuffer2
+    GLuint readTexture = sdfTexBuffer1;
+    GLuint writeTexture = sdfTexBuffer2; // will be used later
+
+    glBindImageTexture(0, readTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F); // set it to write only
+
 
     int reducedGridSize = GRID_SIZE / SDF_REDUCTION_FACTOR;
-    DispatchComputeShader(jumpFloodInitShaderProgram, reducedGridSize, reducedGridSize, reducedGridSize);
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    DispatchComputeShader(jumpFloodInitShaderProgram, reducedGridSize, reducedGridSize, reducedGridSize); // inits the read, for later use
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+
 
     glUseProgram(jumpFloodStepShaderProgram);
 
-    int stepSize = 1; // Adjust step size for reduced resolution, SET TO 1 FOR TESTING
+    int stepSize = reducedGridSize / 2; // TODO: Make sure this is correct, could be  unnecessary
+    int iterations = 0;
+    int testStopping = 1;
 
-    bool readFromBuffer1 = true;
     while (stepSize >= 1) {
-        // Bind the appropriate buffers for the current step
-        if (readFromBuffer1) {
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, sdfBuffer1); // Read from sdfBuffer1
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, sdfBuffer2); // Write to sdfBuffer2
-        } else {
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, sdfBuffer2); // Read from sdfBuffer2
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, sdfBuffer1); // Write to sdfBuffer1
-        }
-
-        // std::cout << "Step size: " << stepSize
-        //       << " | Reading from " << (readFromBuffer1 ? "sdfBuffer1" : "sdfBuffer2")
-        //       << ", Writing to " << (readFromBuffer1 ? "sdfBuffer2" : "sdfBuffer1") << std::endl;
-
+        iterations++;
+        glBindImageTexture(0, readTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
+        glBindImageTexture(1, writeTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
 
         *jfaStepSV.value = stepSize;
-        jfaStepSV.uploadToShader(true);
+        jfaStepSV.uploadToShader();
 
 
         DispatchComputeShader(jumpFloodStepShaderProgram, reducedGridSize, reducedGridSize , reducedGridSize);
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         stepSize /= 2; // Halve step size
-        readFromBuffer1 = !readFromBuffer1;
+        std::swap(readTexture, writeTexture);
+
+        if (iterations == testStopping) {
+            // break;
+        }
     }
 
-    if (readFromBuffer1) {
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, sdfBuffer2); // Final read buffer
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, sdfBuffer1); // Final write buffer (not used further)
-        // std::cout << "Final state: Reading from sdfBuffer2, Writing to sdfBuffer1" << std::endl;
-    } else {
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, sdfBuffer1); // Final read buffer
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, sdfBuffer2); // Final write buffer (not used further)
-        // std::cout << "Final state: Reading from sdfBuffer1, Writing to sdfBuffer2" << std::endl;
-    }
-
+    glBindImageTexture(0, readTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F); // set to read after last swap for rendering
 }
 
 
