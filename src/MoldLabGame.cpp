@@ -12,7 +12,6 @@
 
 MoldLabGame::MoldLabGame(int width, int height, const std::string& title)
 : GameEngine(width, height, title) {
-    voxelGrid = new float[GRID_SIZE * GRID_SIZE * GRID_SIZE]();
     spores = new Spore[SPORE_COUNT]();
 
 
@@ -26,7 +25,6 @@ MoldLabGame::~MoldLabGame() {
     if (sporesBuffer) glDeleteBuffers(1, &sporesBuffer);
     if (simulationSettingsBuffer) glDeleteBuffers(1, &simulationSettingsBuffer);
 
-    delete[] voxelGrid;
     delete[] spores;
 
     std::cout << "Exiting..." << std::endl;
@@ -70,12 +68,27 @@ void MoldLabGame::initializeShaders() {
     glAttachShader(decaySporesShaderProgram, decaySporesShader);
     glLinkProgram(decaySporesShaderProgram);
     CheckProgramLinking(decaySporesShaderProgram);
+
+    GLuint jfaInitShader = CompileShader(LoadShaderSource("shaders/jump_flood_init.glsl"), GL_COMPUTE_SHADER);
+
+    jumpFloodInitShaderProgram = glCreateProgram();
+    glAttachShader(jumpFloodInitShaderProgram, jfaInitShader);
+    glLinkProgram(jumpFloodInitShaderProgram);
+    CheckProgramLinking(jumpFloodInitShaderProgram);
+
+    GLuint jfaStepShader = CompileShader(LoadShaderSource("shaders/jump_flood_step.glsl"), GL_COMPUTE_SHADER);
+
+    jumpFloodStepShaderProgram = glCreateProgram();
+    glAttachShader(jumpFloodStepShaderProgram, jfaStepShader);
+    glLinkProgram(jumpFloodStepShaderProgram);
+    CheckProgramLinking(jumpFloodStepShaderProgram);
 }
 
 void MoldLabGame::initializeUniformVariables() {
     static vec3 cameraPosition = {GRID_SIZE / 2.0, GRID_SIZE * 1.4, GRID_SIZE * 1.4};
     static vec3 focusPoint = {0.0f, 0.0f, 0.0f};
     static int gridSize = GRID_SIZE;
+    static int jfaStep = GRID_SIZE;
     static float deltaTimeStorage;
 
     cameraPositionSV = ShaderVariable(shaderProgram, &cameraPosition, "cameraPosition");
@@ -83,6 +96,7 @@ void MoldLabGame::initializeUniformVariables() {
     gridSizeSV = ShaderVariable(shaderProgram, &gridSize, "gridSize");
     moveDeltaTimeSV = ShaderVariable(moveSporesShaderProgram, &deltaTimeStorage, "deltaTime");
     decayDeltaTimeSV = ShaderVariable(decaySporesShaderProgram, &deltaTimeStorage, "deltaTime");
+    jfaStepSV = ShaderVariable(jumpFloodStepShaderProgram, &jfaStep, "stepSize");
 }
 
 
@@ -104,24 +118,36 @@ void MoldLabGame::initializeVertexBuffers() {
 }
 
 void MoldLabGame::initializeVoxelGridBuffer() {
-    for (int x = 0; x < GRID_SIZE; x++) {
-        for (int y = 0; y < GRID_SIZE; y++) {
-            for (int z = 0; z < GRID_SIZE; z++) {
-                int idx = x + GRID_SIZE * (y + GRID_SIZE * z);
-                voxelGrid[idx] = 0.0f;
-            }
-        }
-    }
     constexpr GLsizeiptr voxelGridSize = sizeof(float) * GRID_SIZE * GRID_SIZE * GRID_SIZE;
 
-    std::cout << voxelGridSize << std::endl;
     // ** Create Voxel Grid Buffer **
     glGenBuffers(1, &voxelGridBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, voxelGridBuffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, voxelGridSize, voxelGrid, GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, voxelGridSize, nullptr, GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, voxelGridBuffer); // Binding index 0
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind buffer
 }
+
+void MoldLabGame::initializeSDFBuffer() {
+    int reducedGridSize = GRID_SIZE / SDF_REDUCTION_FACTOR;
+    GLsizeiptr sdfGridSize = sizeof(float) * reducedGridSize * reducedGridSize * reducedGridSize * 4;
+
+
+
+    glGenBuffers(1, &sdfBuffer1);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, sdfBuffer1);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sdfGridSize, nullptr, GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, sdfBuffer1); // Binding index 0
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind buffer
+
+    glGenBuffers(1, &sdfBuffer2);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, sdfBuffer2);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sdfGridSize, nullptr, GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, sdfBuffer2); // Binding index 0
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind buffer
+
+}
+
 
 void uploadSettingsBuffer(GLuint simulationSettingsBuffer, SimulationSettings& settings) {
     glGenBuffers(1, &simulationSettingsBuffer);
@@ -138,15 +164,17 @@ void MoldLabGame::initializeSimulationBuffers() {
 
     glGenBuffers(1, &sporesBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, sporesBuffer);
-glBufferData(GL_SHADER_STORAGE_BUFFER, sporesSize, spores, GL_DYNAMIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sporesSize, spores, GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, sporesBuffer); // Binding index 1 for spores
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
 
     // **Settings Buffer**
     uploadSettingsBuffer(simulationSettingsBuffer, simulationSettings);
+
+    // Free the spores memory as it's no longer needed
+    delete[] spores;
+    spores = nullptr; // Set to nullptr for safety
 }
-
-
 
 // ============================
 // Update Helpers
@@ -210,6 +238,58 @@ void MoldLabGame::DispatchComputeShaders() {
 
     DispatchComputeShader(moveSporesShaderProgram, SPORE_COUNT, 1, 1);
     DispatchComputeShader(drawSporesShaderProgram, SPORE_COUNT, 1, 1);
+
+    glUseProgram(jumpFloodInitShaderProgram);
+
+    // Make sure buffers get reset
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, sdfBuffer1); // Read from sdfBuffer1
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, sdfBuffer2); // Write to sdfBuffer2
+
+    int reducedGridSize = GRID_SIZE / SDF_REDUCTION_FACTOR;
+    DispatchComputeShader(jumpFloodInitShaderProgram, reducedGridSize, reducedGridSize, reducedGridSize);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    glUseProgram(jumpFloodStepShaderProgram);
+
+    int stepSize = 1; // Adjust step size for reduced resolution, SET TO 1 FOR TESTING
+
+    bool readFromBuffer1 = true;
+    while (stepSize >= 1) {
+        // Bind the appropriate buffers for the current step
+        if (readFromBuffer1) {
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, sdfBuffer1); // Read from sdfBuffer1
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, sdfBuffer2); // Write to sdfBuffer2
+        } else {
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, sdfBuffer2); // Read from sdfBuffer2
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, sdfBuffer1); // Write to sdfBuffer1
+        }
+
+        // std::cout << "Step size: " << stepSize
+        //       << " | Reading from " << (readFromBuffer1 ? "sdfBuffer1" : "sdfBuffer2")
+        //       << ", Writing to " << (readFromBuffer1 ? "sdfBuffer2" : "sdfBuffer1") << std::endl;
+
+
+
+        *jfaStepSV.value = stepSize;
+        jfaStepSV.uploadToShader(true);
+
+
+        DispatchComputeShader(jumpFloodStepShaderProgram, reducedGridSize, reducedGridSize , reducedGridSize);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        stepSize /= 2; // Halve step size
+        readFromBuffer1 = !readFromBuffer1;
+    }
+
+    if (readFromBuffer1) {
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, sdfBuffer2); // Final read buffer
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, sdfBuffer1); // Final write buffer (not used further)
+        // std::cout << "Final state: Reading from sdfBuffer2, Writing to sdfBuffer1" << std::endl;
+    } else {
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, sdfBuffer1); // Final read buffer
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, sdfBuffer2); // Final write buffer (not used further)
+        // std::cout << "Final state: Reading from sdfBuffer1, Writing to sdfBuffer2" << std::endl;
+    }
+
 }
 
 
@@ -225,9 +305,12 @@ void MoldLabGame::renderingStart() {
 
     initializeVoxelGridBuffer();
 
+    initializeSDFBuffer();
+
 
     simulationSettings.spore_count = SPORE_COUNT;
     simulationSettings.grid_size = GRID_SIZE;
+    simulationSettings.sdf_reduction = SDF_REDUCTION_FACTOR;
     simulationSettings.spore_speed = SPORE_SPEED;
     simulationSettings.decay_speed = SPORE_DECAY;
     simulationSettings.turn_speed = SPORE_TURN_SPEED;
@@ -281,13 +364,14 @@ void MoldLabGame::update(float deltaTime) {
 
 
 void MoldLabGame::render() {
-
     // While using the
     glUseProgram(shaderProgram);
 
     gridSizeSV.uploadToShader();
     cameraPositionSV.uploadToShader();
     focusPointSV.uploadToShader();
+    glUniform1i(glGetUniformLocation(shaderProgram, "sdfReductionFactor"), SDF_REDUCTION_FACTOR);
+
 
     // Draw the full-screen quad
     glBindVertexArray(triangleVao);

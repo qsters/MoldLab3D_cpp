@@ -8,12 +8,14 @@
 #include "SimulationData.h"
 
 
-constexpr int GRID_SIZE = 500;
+constexpr int GRID_SIZE = 10;
 constexpr int SPORE_COUNT = 10;
 constexpr float SPORE_SPEED = 10;
 constexpr float SPORE_DECAY = 0.33;
 constexpr float SPORE_SENSOR_DISTANCE = 10.0;
 constexpr float SPORE_TURN_SPEED = 5.0;
+
+constexpr int SDF_REDUCTION_FACTOR = 1;
 
 constexpr float ROTATION_SPEED =  35.0f;
 constexpr int WORK_GROUP_SIZE = 8;
@@ -42,14 +44,13 @@ protected:
     void renderUI() override;
 
 private:
-    GLuint triangleVbo = 0, triangleVao = 0, voxelGridBuffer = 0, simulationSettingsBuffer = 0, sporesBuffer = 0;
-    GLuint shaderProgram = 0, drawSporesShaderProgram = 0, moveSporesShaderProgram = 0, decaySporesShaderProgram = 0;
+    GLuint triangleVbo = 0, triangleVao = 0, voxelGridBuffer = 0, simulationSettingsBuffer = 0, sporesBuffer = 0, sdfBuffer1 = 0, sdfBuffer2 = 0;
+    GLuint shaderProgram = 0, drawSporesShaderProgram = 0, moveSporesShaderProgram = 0, decaySporesShaderProgram = 0, jumpFloodInitShaderProgram = 0, jumpFloodStepShaderProgram = 0;
     ShaderVariable<vec3> cameraPositionSV, focusPointSV;
-    ShaderVariable<int> gridSizeSV;
+    ShaderVariable<int> gridSizeSV, jfaStepSV;
     ShaderVariable<float> moveDeltaTimeSV, decayDeltaTimeSV;
 
     // Dynamically allocated to reduce Stack Memory, was causing issues at large values
-    float* voxelGrid = nullptr;
     Spore* spores = nullptr;
 
     SimulationSettings simulationSettings;
@@ -66,6 +67,7 @@ private:
     void initializeUniformVariables();
     void initializeVertexBuffers();
     void initializeVoxelGridBuffer();
+    void initializeSDFBuffer();
     void initializeSimulationBuffers();
 
     // Update Helpers

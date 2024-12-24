@@ -10,6 +10,7 @@ struct Spore {
 struct SimulationSettings {
     int spore_count;
     int grid_size;
+    int sdf_reduction;
     float spore_speed;
     float decay_speed;
     float turn_speed;
@@ -45,7 +46,7 @@ void main() {
     int gridSize = settings.grid_size;
 
     // Get the spore position
-    vec3 sporePosition = spores[sporeID].position;
+    vec3 sporePosition = vec3(2.0);
 
     // Determine the voxel grid coordinates closest to the spore position
     ivec3 voxelCoord = ivec3(

@@ -21,6 +21,7 @@ uniform vec3 focusPoint;
 uniform int gridSize;
 
 uniform float testValue;
+uniform int sdfReductionFactor;
 
 out vec4 fragmentColor;
 
@@ -31,11 +32,14 @@ vec3 objectColor = vec3(0.0, 1.0, 0.2);   // Reddish object
 float maxCubeSideLength = 1.0;
 
 
-
-
 // Define the voxel grid as a shader storage buffer
 layout(std430, binding = 0) buffer VoxelGrid {
     float voxelData[]; // Flattened 3D grid as a 1D array
+};
+
+// After dispatching, buffer 4 is the data to read from for rendering
+layout(std430, binding = 4) buffer SDFGrid {
+    vec4 sdfData[];
 };
 
 // Calculate the distance from a point to a cube centered at `c` with size `s`
@@ -77,14 +81,16 @@ float map_the_world(in vec3 point) {
             for (int z = max(center.z - searchRadius, 0); z <= min(center.z + searchRadius, gridSize - 1); z++) {
                 int idx = x + gridSize * (y + gridSize * z); // Index for flattened 3D array
 
+                float voxelData = clamp(1 - (sdfData[idx].w / gridSize), 0.0, 1.0);
+
                 // Skip zero-sized cubes
-                if (voxelData[idx] <= 0.01) continue;
+                if (voxelData <= 0.01) continue;
 
                 // Calculate the grid position
                 vec3 gridPoint = vec3(float(x), float(y), float(z));
 
                 // Calculate the distance to the cube at this grid point
-                float cube = distance_from_cube(point, gridPoint, voxelData[idx]);
+                float cube = distance_from_cube(point, gridPoint, voxelData);
 
                 // Combine distances using smooth_min for blending
                 result = min(result, cube);
@@ -97,6 +103,28 @@ float map_the_world(in vec3 point) {
 
     return result; // Return the minimum distance for the scene
 }
+
+//float map_the_world(in vec3 point) {
+//    // Compute the reduced grid size
+//    int reducedGridSize = gridSize / sdfReductionFactor;
+//
+//    // Convert the world-space point to reduced grid coordinates
+//    vec3 reducedGridPoint = clamp(floor(point / float(sdfReductionFactor)), vec3(0.0), vec3(reducedGridSize));
+//
+//    // Compute the 1D index for the reduced grid
+//    int x = int(reducedGridPoint.x);
+//    int y = int(reducedGridPoint.y);
+//    int z = int(reducedGridPoint.z);
+//    int index = x + reducedGridSize * (y + reducedGridSize * z);
+//
+//    // Retrieve the distance from the SDF grid
+//    vec4 sdfEntry = sdfData[index];
+//
+//    // Return the distance (stored in the `.w` component)
+//    return sdfEntry.w;
+//}
+
+
 
 
 // Calculate the normal at a point on the surface
@@ -133,7 +161,7 @@ vec3 calculage_lighting(in vec3 rayOrigin, in vec3 current_position) {
 // Perform ray marching to find intersections with the scene
 vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
     float total_distance_traveled = 0.0;
-    const int NUMBER_OF_STEPS = gridSize / 2;
+    const int NUMBER_OF_STEPS = 50;
     const float MINIMUM_HIT_DISTANCE = 0.01;
     // Diagonal of a cube side length * sqrt(3)
     const float MAXIMUM_TRACE_DISTANCE = gridSize * 1.732;
@@ -147,6 +175,7 @@ vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
         }
 
         float distance_to_closest = map_the_world(current_position);
+//        return vec3(distance_to_closest);
 
         if (distance_to_closest < MINIMUM_HIT_DISTANCE) {
             return calculage_lighting(rayOrigin, current_position);
@@ -180,17 +209,61 @@ void main() {
 
     vec3 gridMin = vec3(0.0);
     vec3 gridMax = vec3(gridSize - 1);
+    vec3 offset = vec3(0.5); // offset to account for cube thickness
 
     float tNear;
     // Cull rays that don't intersect the AABB
-    if (!intersectsAABB(rayOrigin, rayDirection, gridMin, gridMax, tNear)) {
+    if (!intersectsAABB(rayOrigin, rayDirection, gridMin - offset, gridMax + offset, tNear)) {
         fragmentColor = vec4(0.0, 0.0, 0.0, 1.0); // Background color
         return;
     }
+
     // Advance the ray origin to the intersection point with the AABB
     rayOrigin += rayDirection * max(tNear - 0.001, 0.0); // Ensure tNear is non-negative
+
+    int reducedGridSize = gridSize / sdfReductionFactor;
+
+    // Convert the world-space point to reduced grid coordinates
+    vec3 reducedGridPoint = floor(focusPoint / float(sdfReductionFactor));
+
+    int x = int(reducedGridPoint.x);
+    int y = int(reducedGridPoint.y);
+    int z = int(reducedGridPoint.z);
+    int index = x + reducedGridSize * (y + reducedGridSize * z);
 
     // Perform ray marching from the AABB intersection point
     fragmentColor = vec4(ray_march(rayOrigin, rayDirection), 1.0);
 }
 
+//void main() {
+//    // Compute the reduced grid size
+//    int reducedGridSize = gridSize / sdfReductionFactor;
+//
+//    // Map screen-space UV to grid coordinates
+//    ivec2 gridPos = ivec2(uv * reducedGridSize);
+//
+//    // Ensure the coordinates are within bounds
+//    if (gridPos.x < 0 || gridPos.y < 0 || gridPos.x >= reducedGridSize || gridPos.y >= reducedGridSize) {
+//        fragmentColor = vec4(0.0, 0.0, 0.0, 1.0); // Out of bounds, render black
+//        return;
+//    }
+//
+//    // Compute the 1D index for the slice at `sliceIndex`
+//    int index = gridPos.x + reducedGridSize * (gridPos.y + reducedGridSize * 200);
+//
+//    // Read the SDF value
+//    vec4 sdfEntry = sdfData[index];
+//
+//    // Map the distance value to a color
+//    float distance = sdfEntry.w;
+//    vec3 color;
+//    if (distance < 1e6) {
+//        // Normalize distance and map to color gradient
+//        float normalizedDistance = clamp(distance / float(gridSize), 0.0, 1.0);
+//        color = vec3(1.0 - normalizedDistance, normalizedDistance, 0.0); // Gradient from red to green
+//    } else {
+//        color = vec3(0.0, 0.0, 0.0); // Empty cells are black
+//    }
+//
+//    fragmentColor = vec4(color, 1.0);
+//}

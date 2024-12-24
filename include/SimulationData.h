@@ -1,11 +1,12 @@
-#ifndef SPORESDATA_H
-#define SPORESDATA_H
+#ifndef SIMULATIONDATA_H
+#define SIMULATIONDATA_H
 #include <cstdint>
 #include <linmath.h>
 
 struct SimulationSettings {
     int spore_count;       // Number of spores
     int grid_size;   // Size of the simulation grid
+    int sdf_reduction;
     float spore_speed;          // Speed of spores
     float decay_speed;          // Decay speed
     float turn_speed;           // Turning speed for spores

@@ -10,6 +10,7 @@ struct Spore {
 struct SimulationSettings {
     int spore_count;
     int grid_size;
+    int sdf_reduction;
     float spore_speed;
     float decay_speed;
     float turn_speed;
