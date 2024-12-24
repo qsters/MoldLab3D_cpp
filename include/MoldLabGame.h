@@ -15,7 +15,7 @@ constexpr float SPORE_DECAY = 0.33;
 constexpr float SPORE_SENSOR_DISTANCE = 10.0;
 constexpr float SPORE_TURN_SPEED = 5.0;
 
-constexpr int SDF_REDUCTION_FACTOR = 2;
+constexpr int SDF_REDUCTION_FACTOR = 1;
 
 constexpr float ROTATION_SPEED =  35.0f;
 constexpr int WORK_GROUP_SIZE = 8;

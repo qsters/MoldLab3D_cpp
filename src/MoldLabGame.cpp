@@ -252,7 +252,7 @@ void MoldLabGame::DispatchComputeShaders() {
 
     glUseProgram(jumpFloodStepShaderProgram);
 
-    int stepSize = reducedGridSize / 2; // TODO: Make sure this is correct, could be  unnecessary
+    int stepSize = reducedGridSize / 2; // TODO: Make sure this is correct, may need to be doubled
     int iterations = 0;
     int testStopping = 1;
 

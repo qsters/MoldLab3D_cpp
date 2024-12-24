@@ -66,7 +66,6 @@ float smooth_max(float a, float b, float k) {
     return max(a, b) + h * h * k * 0.25;
 }
 
-
 float map_the_world(in vec3 point) {
     float result = 1e6; // Start with a very large value (infinite distance)
     const int searchRadius = 2; // Local cube radius (adjustable)
@@ -74,59 +73,37 @@ float map_the_world(in vec3 point) {
     // Convert point to grid coordinates
     ivec3 center = ivec3(floor(point));
 
-    // Iterate only within a cube around the ray's current position
-    for (int x = max(center.x - searchRadius, 0); x <= min(center.x + searchRadius, gridSize - 1); x++) {
-        for (int y = max(center.y - searchRadius, 0); y <= min(center.y + searchRadius, gridSize - 1); y++) {
-            for (int z = max(center.z - searchRadius, 0); z <= min(center.z + searchRadius, gridSize - 1); z++) {
-                ivec3 searchPoint = ivec3(x, y, z) / sdfReductionFactor;
+    ivec3 searchPoint = center / sdfReductionFactor;
+    vec4 sdfValue = imageLoad(sdfData, searchPoint);
 
-                vec4 sdfValue = imageLoad(sdfData, searchPoint);
+    result = sdfValue.w;
 
-                float voxelData = clamp(1 - (sdfValue.w / (float(gridSize))), 0.0, 1.0);
-
-                // Skip zero-sized cubes
-                if (voxelData <= 0.01 || sdfValue.w >= 1e6) continue;
-
-                // Calculate the grid position
-                vec3 gridPoint = vec3(float(x), float(y), float(z));
-
-                // Calculate the distance to the cube at this grid point
-                float cube = distance_from_cube(point, gridPoint, voxelData);
-
-                // Combine distances using smooth_min for blending
-                result = min(result, cube);
-            }
-        }
-    }
+//    // Iterate only within a cube around the ray's current position
+//    for (int x = max(center.x - searchRadius, 0); x <= min(center.x + searchRadius, gridSize - 1); x++) {
+//        for (int y = max(center.y - searchRadius, 0); y <= min(center.y + searchRadius, gridSize - 1); y++) {
+//            for (int z = max(center.z - searchRadius, 0); z <= min(center.z + searchRadius, gridSize - 1); z++) {
+//                int idx = x + gridSize * (y + gridSize * z); // Index for flattened 3D array
+//
+//                // Skip zero-sized cubes
+//                if (voxelData[idx] <= 0.01) continue;
+//
+//                // Calculate the grid position
+//                vec3 gridPoint = vec3(float(x), float(y), float(z));
+//
+//                // Calculate the distance to the cube at this grid point
+//                float cube = distance_from_cube(point, gridPoint, voxelData[idx]);
+//
+//                // Combine distances using smooth_min for blending
+//                result = min(result, cube);
+//            }
+//        }
+//    }
 
     // Moves search radius if nothing has been encountered.
     result = min(searchRadius, result);
 
     return result; // Return the minimum distance for the scene
 }
-
-//float map_the_world(in vec3 point) {
-//    // Compute the reduced grid size
-//    int reducedGridSize = gridSize / sdfReductionFactor;
-//
-//    // Convert the world-space point to reduced grid coordinates
-//    vec3 reducedGridPoint = clamp(floor(point / float(sdfReductionFactor)), vec3(0.0), vec3(reducedGridSize));
-//
-//    // Compute the 1D index for the reduced grid
-//    int x = int(reducedGridPoint.x);
-//    int y = int(reducedGridPoint.y);
-//    int z = int(reducedGridPoint.z);
-//    int index = x + reducedGridSize * (y + reducedGridSize * z);
-//
-//    // Retrieve the distance from the SDF grid
-//    vec4 sdfEntry = sdfData[index];
-//
-//    // Return the distance (stored in the `.w` component)
-//    return sdfEntry.w;
-//}
-
-
-
 
 // Calculate the normal at a point on the surface
 vec3 calculate_normal(in vec3 point) {

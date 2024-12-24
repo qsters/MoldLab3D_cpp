@@ -46,7 +46,7 @@ void main() {
     int gridSize = settings.grid_size;
 
     // Get the spore position
-    vec3 sporePosition = vec3(1.0);
+    vec3 sporePosition = spores[sporeID].position;
 
     // Determine the voxel grid coordinates closest to the spore position
     ivec3 voxelCoord = ivec3(
