@@ -68,7 +68,7 @@ float smooth_max(float a, float b, float k) {
 
 float map_the_world(in vec3 point) {
     float result = 1e6; // Start with a very large value (infinite distance)
-    const int searchRadius = 2; // Local cube radius (adjustable)
+    const int searchRadius = 1; // Local cube radius (adjustable)
 
     // Convert point to grid coordinates
     ivec3 center = ivec3(floor(point));
@@ -76,28 +76,34 @@ float map_the_world(in vec3 point) {
     ivec3 searchPoint = center / sdfReductionFactor;
     vec4 sdfValue = imageLoad(sdfData, searchPoint);
 
-    result = sdfValue.w;
+    // skip this if the closest cube is less than the max betwen the search radius and the reduction factor times by the diagonal of the cube to make sure it will account for diagonal movement.
+    if (sdfValue.w > max(sdfReductionFactor, searchRadius) * 1.8) {
+        // subtract a bit off to make sure we do not overshoot
+        result = sdfValue.w - sdfReductionFactor / 2.0;
+        result = min(result, gridSize / 2.0); // make sure it jumps no more than half the grid at one point to account for sdf values not set
+        return result;
+    }
 
-//    // Iterate only within a cube around the ray's current position
-//    for (int x = max(center.x - searchRadius, 0); x <= min(center.x + searchRadius, gridSize - 1); x++) {
-//        for (int y = max(center.y - searchRadius, 0); y <= min(center.y + searchRadius, gridSize - 1); y++) {
-//            for (int z = max(center.z - searchRadius, 0); z <= min(center.z + searchRadius, gridSize - 1); z++) {
-//                int idx = x + gridSize * (y + gridSize * z); // Index for flattened 3D array
-//
-//                // Skip zero-sized cubes
-//                if (voxelData[idx] <= 0.01) continue;
-//
-//                // Calculate the grid position
-//                vec3 gridPoint = vec3(float(x), float(y), float(z));
-//
-//                // Calculate the distance to the cube at this grid point
-//                float cube = distance_from_cube(point, gridPoint, voxelData[idx]);
-//
-//                // Combine distances using smooth_min for blending
-//                result = min(result, cube);
-//            }
-//        }
-//    }
+    // Iterate only within a cube around the ray's current position
+    for (int x = max(center.x - searchRadius, 0); x <= min(center.x + searchRadius, gridSize - 1); x++) {
+        for (int y = max(center.y - searchRadius, 0); y <= min(center.y + searchRadius, gridSize - 1); y++) {
+            for (int z = max(center.z - searchRadius, 0); z <= min(center.z + searchRadius, gridSize - 1); z++) {
+                int idx = x + gridSize * (y + gridSize * z); // Index for flattened 3D array
+
+                // Skip zero-sized cubes
+                if (voxelData[idx] <= 0.01) continue;
+
+                // Calculate the grid position
+                vec3 gridPoint = vec3(float(x), float(y), float(z));
+
+                // Calculate the distance to the cube at this grid point
+                float cube = distance_from_cube(point, gridPoint, voxelData[idx]);
+
+                // Combine distances using smooth_min for blending
+                result = smooth_min(result, cube, 0.55);
+            }
+        }
+    }
 
     // Moves search radius if nothing has been encountered.
     result = min(searchRadius, result);
@@ -139,7 +145,7 @@ vec3 calculage_lighting(in vec3 rayOrigin, in vec3 current_position) {
 // Perform ray marching to find intersections with the scene
 vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
     float total_distance_traveled = 0.0;
-    const int NUMBER_OF_STEPS = 50;
+    const int NUMBER_OF_STEPS = 500;
     const float MINIMUM_HIT_DISTANCE = 0.01;
     // Diagonal of a cube side length * sqrt(3)
     const float MAXIMUM_TRACE_DISTANCE = gridSize * 1.732;
@@ -149,7 +155,7 @@ vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
 
         // If traveled too far, or exited the bounds, return red (for now)
         if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE || distance_from_cube(current_position, focusPoint, gridSize) > 1) {
-            return vec3(1.0, 0.0, 0.0);
+            return vec3(i / float(NUMBER_OF_STEPS), 0.0, 0.0);
         }
 
         float distance_to_closest = map_the_world(current_position);
@@ -161,7 +167,7 @@ vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
 
         total_distance_traveled += distance_to_closest;
     }
-    return vec3(1.0); // Background color (black)
+    return vec3(0.0); // Background color (black)
 }
 
 bool intersectsAABB(vec3 rayOrigin, vec3 rayDirection, vec3 gridMin, vec3 gridMax, out float tNear) {
