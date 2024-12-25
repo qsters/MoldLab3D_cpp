@@ -8,14 +8,14 @@
 #include "SimulationData.h"
 
 
-constexpr int GRID_SIZE = 600;
-constexpr int SPORE_COUNT = 1'000'000;
+constexpr int GRID_SIZE = 300;
+constexpr int SPORE_COUNT = 1000'000;
 constexpr float SPORE_SPEED = 10;
 constexpr float SPORE_DECAY = 0.33;
 constexpr float SPORE_SENSOR_DISTANCE = 10.0;
 constexpr float SPORE_TURN_SPEED = 5.0;
 
-constexpr int SDF_REDUCTION_FACTOR = 2;
+constexpr int SDF_REDUCTION_FACTOR = 3;
 
 constexpr float ROTATION_SPEED =  35.0f;
 constexpr int WORK_GROUP_SIZE = 8;
@@ -57,8 +57,9 @@ private:
 
     float horizontalAngle = 90.0f; // Rotation angle around the Y-axis
     float verticalAngle = 0.0f;   // Rotation angle around the X-axis
-    float orbitRadius = 10.0f;    // Distance from the origin
+    float orbitRadius = GRID_SIZE * 0.75;    // Distance from the origin
     float rotationSpeed = 1.0f;   // Speed of rotation
+
 
     InputState inputState;
 

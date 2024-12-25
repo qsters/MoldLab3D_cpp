@@ -47,6 +47,11 @@ float distance_from_cube(in vec3 point, in vec3 center, in float sideLength) {
     return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0);
 }
 
+float distance_from_sphere(in vec3 point, in vec3 center, in float radius) {
+    // Distance from center minus the sphere radius
+    return length(point - center) - radius;
+}
+
 float distance_from_rounded_cube(in vec3 point, in vec3 center, in float sideLength, float radius) {
     // Compute the half-size of the cube
     float halfSize = mix(0, maxCubeSideLength, sideLength) * 0.5;
@@ -76,11 +81,14 @@ float map_the_world(in vec3 point) {
     ivec3 searchPoint = center / sdfReductionFactor;
     vec4 sdfValue = imageLoad(sdfData, searchPoint);
 
+    float cameraSDF = distance_from_sphere(point, cameraPosition, float(gridSize) / 4.0);
+
     // skip this if the closest cube is less than the max betwen the search radius and the reduction factor times by the diagonal of the cube to make sure it will account for diagonal movement.
     if (sdfValue.w > max(sdfReductionFactor, searchRadius) * 1.8) {
         // subtract a bit off to make sure we do not overshoot
         result = sdfValue.w - sdfReductionFactor / 2.0;
         result = min(result, gridSize / 2.0); // make sure it jumps no more than half the grid at one point to account for sdf values not set
+        result = max(result, -cameraSDF);
         return result;
     }
 
@@ -107,7 +115,7 @@ float map_the_world(in vec3 point) {
 
     // Moves search radius if nothing has been encountered.
     result = min(searchRadius, result);
-
+    result = max(result, -cameraSDF);
     return result; // Return the minimum distance for the scene
 }
 

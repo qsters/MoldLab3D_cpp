@@ -341,10 +341,18 @@ void MoldLabGame::start() {
 }
 
 void MoldLabGame::update(float deltaTime) {
-    HandleCameraMovement(GRID_SIZE * 1.3, deltaTime);
+    HandleCameraMovement(orbitRadius, deltaTime);
 
     *moveDeltaTimeSV.value = deltaTime;
     *decayDeltaTimeSV.value = deltaTime;
+
+    float orbitDistanceChange = 40.0;
+
+    if (inputState.isDPressed) {
+        orbitRadius += orbitDistanceChange * deltaTime;
+    } else if (inputState.isAPressed) {
+        orbitRadius -= orbitDistanceChange * deltaTime;
+    }
 
     DispatchComputeShaders();
 }
