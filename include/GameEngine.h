@@ -9,8 +9,6 @@
 #include "InputManager.h"
 
 
-
-
 // Abstract base class for game engines
 class GameEngine {
 public:
@@ -26,6 +24,10 @@ public:
     static std::string LoadShaderSource(const std::string& filepath);
     static std::pair<std::string, std::string> LoadCombinedShaderSource(const std::string& filepath);
     static GLuint CompileShader(const std::string& source, GLenum shader_type);
+
+    static GLuint CompileAndAttachShader(const std::string &source, GLenum shaderType, GLuint program);
+
+    static GLuint CreateShaderProgram(const std::vector<std::tuple<std::string, GLenum, bool>>& shaders);
 
     static void CheckProgramLinking(GLuint program);
 

@@ -168,6 +168,54 @@ GLuint GameEngine::CompileShader(const std::string& source, GLenum shader_type) 
     return shader;
 }
 
+GLuint GameEngine::CompileAndAttachShader(const std::string& source, GLenum shaderType, GLuint program) {
+    GLuint shader = CompileShader(source, shaderType);
+    glAttachShader(program, shader);
+    return shader;
+}
+
+
+GLuint GameEngine::CreateShaderProgram(const std::vector<std::tuple<std::string, GLenum, bool>>& shaders) {
+    // Create a new program
+    GLuint program = glCreateProgram();
+
+    // Keep track of all shaders to clean up later
+    std::vector<GLuint> shaderObjects;
+
+    for (const auto& [filePath, shaderType, isCombined] : shaders) {
+        if (isCombined) {
+            // Load combined shader source and compile both vertex and fragment shaders
+
+            if (shaderType != GL_VERTEX_SHADER && shaderType != GL_FRAGMENT_SHADER) {
+                std::cerr << "Error: Combined shaders must use GL_VERTEX_SHADER or GL_FRAGMENT_SHADER as the shader type." << std::endl;
+                continue;
+            }
+            auto [vertexShaderSource, fragmentShaderSource] = LoadCombinedShaderSource(filePath);
+
+            shaderObjects.push_back(CompileAndAttachShader(vertexShaderSource, GL_VERTEX_SHADER, program));
+            shaderObjects.push_back(CompileAndAttachShader(fragmentShaderSource, GL_FRAGMENT_SHADER, program));
+        } else {
+            // Load and compile a single shader
+            std::string source = LoadShaderSource(filePath);
+            shaderObjects.push_back(CompileAndAttachShader(source, shaderType, program));
+        }
+    }
+
+    // Link the program
+    glLinkProgram(program);
+    CheckProgramLinking(program);
+
+    // Detach and delete the shaders after linking
+    for (GLuint shader : shaderObjects) {
+        glDetachShader(program, shader);
+        glDeleteShader(shader);
+    }
+
+    return program;
+}
+
+
+
 
 void GameEngine::CheckProgramLinking(GLuint program) {
     GLint success;

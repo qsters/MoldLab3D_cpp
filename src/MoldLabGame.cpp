@@ -34,55 +34,32 @@ MoldLabGame::~MoldLabGame() {
 // Initialization Helpers
 // ============================
 void MoldLabGame::initializeShaders() {
-    // Load and compile shaders
-    auto [vertexShaderCode, fragmentShaderCode] = LoadCombinedShaderSource("shaders/renderer.glsl");
+    shaderProgram = CreateShaderProgram({
+        {"shaders/renderer.glsl", GL_VERTEX_SHADER, true} // Combined vertex and fragment shaders
+    });
 
-    GLuint vertexShader = CompileShader(vertexShaderCode, GL_VERTEX_SHADER);
+    // Initialize the compute shaders
+    drawSporesShaderProgram = CreateShaderProgram({
+        {"shaders/draw_spores.glsl", GL_COMPUTE_SHADER, false}
+    });
 
-    GLuint fragmentShader = CompileShader(fragmentShaderCode, GL_FRAGMENT_SHADER);
+    moveSporesShaderProgram = CreateShaderProgram({
+        {"shaders/move_spores.glsl", GL_COMPUTE_SHADER, false}
+    });
 
-    // Link shaders into a program
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    CheckProgramLinking(shaderProgram);
+    decaySporesShaderProgram = CreateShaderProgram({
+        {"shaders/decay_spores.glsl", GL_COMPUTE_SHADER, false}
+    });
 
-    GLuint growsSporesShader = CompileShader(LoadShaderSource("shaders/draw_spores.glsl"), GL_COMPUTE_SHADER);
+    jumpFloodInitShaderProgram = CreateShaderProgram({
+        {"shaders/jump_flood_init.glsl", GL_COMPUTE_SHADER, false}
+    });
 
-    drawSporesShaderProgram = glCreateProgram();
-    glAttachShader(drawSporesShaderProgram, growsSporesShader);
-    glLinkProgram(drawSporesShaderProgram);
-    CheckProgramLinking(drawSporesShaderProgram);
-
-    GLuint moveSporesShader = CompileShader(LoadShaderSource("shaders/move_spores.glsl"), GL_COMPUTE_SHADER);
-
-    moveSporesShaderProgram = glCreateProgram();
-    glAttachShader(moveSporesShaderProgram, moveSporesShader);
-    glLinkProgram(moveSporesShaderProgram);
-    CheckProgramLinking(moveSporesShaderProgram);
-
-    GLuint decaySporesShader = CompileShader(LoadShaderSource("shaders/decay_spores.glsl"),GL_COMPUTE_SHADER);
-
-    decaySporesShaderProgram = glCreateProgram();
-    glAttachShader(decaySporesShaderProgram, decaySporesShader);
-    glLinkProgram(decaySporesShaderProgram);
-    CheckProgramLinking(decaySporesShaderProgram);
-
-    GLuint jfaInitShader = CompileShader(LoadShaderSource("shaders/jump_flood_init.glsl"), GL_COMPUTE_SHADER);
-
-    jumpFloodInitShaderProgram = glCreateProgram();
-    glAttachShader(jumpFloodInitShaderProgram, jfaInitShader);
-    glLinkProgram(jumpFloodInitShaderProgram);
-    CheckProgramLinking(jumpFloodInitShaderProgram);
-
-    GLuint jfaStepShader = CompileShader(LoadShaderSource("shaders/jump_flood_step.glsl"), GL_COMPUTE_SHADER);
-
-    jumpFloodStepShaderProgram = glCreateProgram();
-    glAttachShader(jumpFloodStepShaderProgram, jfaStepShader);
-    glLinkProgram(jumpFloodStepShaderProgram);
-    CheckProgramLinking(jumpFloodStepShaderProgram);
+    jumpFloodStepShaderProgram = CreateShaderProgram({
+        {"shaders/jump_flood_step.glsl", GL_COMPUTE_SHADER, false}
+    });
 }
+
 
 void MoldLabGame::initializeUniformVariables() {
     static vec3 cameraPosition = {GRID_SIZE / 2.0, GRID_SIZE * 1.4, GRID_SIZE * 1.4};
