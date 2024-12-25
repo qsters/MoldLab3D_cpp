@@ -28,13 +28,14 @@ add_executable(MoldLab3D ${SRC_FILES}
         src/InputManager.cpp
         include/InputManager.h
         include/MeshData.h
-        include/SimulationData.h
+        include/SimulationSettings.h
         src/imgui/imgui.cpp            # ImGui source files
         src/imgui/imgui_draw.cpp
         src/imgui/imgui_widgets.cpp
         src/imgui/imgui_impl_glfw.cpp
         src/imgui/imgui_impl_opengl3.cpp
-        src/imgui/imgui_tables.cpp)
+        src/imgui/imgui_tables.cpp
+        include/Spore.h)
 
 # Find and link libraries
 find_package(OpenGL REQUIRED)

@@ -18,23 +18,25 @@ void main() {
 in vec2 uv;
 uniform vec3 cameraPosition;
 uniform vec3 focusPoint;
-uniform int gridSize;
 
 uniform float testValue;
-uniform int sdfReductionFactor;
 
 out vec4 fragmentColor;
 
-vec3 lightPosition = vec3(-5, gridSize * 1.5f, -5); // Light above and slightly to the side
 vec3 lightColor = vec3(1.0, 1.0, 1.0);    // Pure white light
 vec3 objectColor = vec3(0.0, 1.0, 0.2);   // Reddish object
 
 float maxCubeSideLength = 1.0;
 
+#DEFINE_SIMULATION_SETTINGS
 
 // Define the voxel grid as a shader storage buffer
 layout(std430, binding = 0) buffer VoxelGrid {
     float voxelData[]; // Flattened 3D grid as a 1D array
+};
+
+layout(std430, binding = 2) buffer SettingsBuffer {
+    SimulationSettings settings;
 };
 
 // After dispatching, buffer 4 is the data to read from for rendering
@@ -78,25 +80,27 @@ float map_the_world(in vec3 point) {
     // Convert point to grid coordinates
     ivec3 center = ivec3(floor(point));
 
+    int sdfReductionFactor = settings.sdf_reduction;
+
     ivec3 searchPoint = center / sdfReductionFactor;
     vec4 sdfValue = imageLoad(sdfData, searchPoint);
 
-    float cameraSDF = distance_from_sphere(point, cameraPosition, float(gridSize) / 4.0);
+    float cameraSDF = distance_from_sphere(point, cameraPosition, float(settings.grid_size) / 4.0);
 
     // skip this if the closest cube is less than the max betwen the search radius and the reduction factor times by the diagonal of the cube to make sure it will account for diagonal movement.
     if (sdfValue.w > max(sdfReductionFactor, searchRadius) * 1.8) {
         // subtract a bit off to make sure we do not overshoot
         result = sdfValue.w - sdfReductionFactor / 2.0;
-        result = min(result, gridSize / 2.0); // make sure it jumps no more than half the grid at one point to account for sdf values not set
+        result = min(result, settings.grid_size / 2.0); // make sure it jumps no more than half the grid at one point to account for sdf values not set
         result = max(result, -cameraSDF);
         return result;
     }
 
     // Iterate only within a cube around the ray's current position
-    for (int x = max(center.x - searchRadius, 0); x <= min(center.x + searchRadius, gridSize - 1); x++) {
-        for (int y = max(center.y - searchRadius, 0); y <= min(center.y + searchRadius, gridSize - 1); y++) {
-            for (int z = max(center.z - searchRadius, 0); z <= min(center.z + searchRadius, gridSize - 1); z++) {
-                int idx = x + gridSize * (y + gridSize * z); // Index for flattened 3D array
+    for (int x = max(center.x - searchRadius, 0); x <= min(center.x + searchRadius, settings.grid_size - 1); x++) {
+        for (int y = max(center.y - searchRadius, 0); y <= min(center.y + searchRadius, settings.grid_size - 1); y++) {
+            for (int z = max(center.z - searchRadius, 0); z <= min(center.z + searchRadius, settings.grid_size - 1); z++) {
+                int idx = x + settings.grid_size * (y + settings.grid_size * z); // Index for flattened 3D array
 
                 // Skip zero-sized cubes
                 if (voxelData[idx] <= 0.01) continue;
@@ -131,6 +135,7 @@ vec3 calculate_normal(in vec3 point) {
 vec3 calculage_lighting(in vec3 rayOrigin, in vec3 current_position) {
     // Calculate normal at the hit point
     vec3 normal = calculate_normal(current_position);
+    vec3 lightPosition = vec3(-5, settings.grid_size * 1.5f, -5); // Light above and slightly to the side
 
     // Calculate lighting
     vec3 lightDir = normalize(lightPosition - current_position); // Direction to light
@@ -145,7 +150,7 @@ vec3 calculage_lighting(in vec3 rayOrigin, in vec3 current_position) {
 
     vec3 light = diffuse + ambient ; // Combine all light components
 
-    vec3 gradient = current_position / vec3(gridSize);
+    vec3 gradient = current_position / vec3(settings.grid_size);
 
     return gradient; // Multiply by object color
 }
@@ -156,13 +161,13 @@ vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
     const int NUMBER_OF_STEPS = 500;
     const float MINIMUM_HIT_DISTANCE = 0.01;
     // Diagonal of a cube side length * sqrt(3)
-    const float MAXIMUM_TRACE_DISTANCE = gridSize * 1.732;
+    const float MAXIMUM_TRACE_DISTANCE = settings.grid_size * 1.732;
 
     for (int i = 0; i < NUMBER_OF_STEPS; ++i) {
         vec3 current_position = rayOrigin + total_distance_traveled * rayDirection;
 
         // If traveled too far, or exited the bounds, return red (for now)
-        if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE || distance_from_cube(current_position, focusPoint, gridSize) > 1) {
+        if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE || distance_from_cube(current_position, focusPoint, settings.grid_size) > 1) {
             return vec3(i / float(NUMBER_OF_STEPS), 0.0, 0.0);
         }
 
@@ -200,7 +205,7 @@ void main() {
     vec3 rayDirection = normalize(uv.x * right + uv.y * up + forward); // Combine screen-space uv with camera orientation
 
     vec3 gridMin = vec3(0.0);
-    vec3 gridMax = vec3(gridSize - 1);
+    vec3 gridMax = vec3(settings.grid_size - 1);
     vec3 offset = vec3(0.5); // offset to account for cube thickness
 
     float tNear;
@@ -219,7 +224,7 @@ void main() {
 
 //void main() {
 //    // Compute the reduced grid size
-//    int reducedGridSize = gridSize / sdfReductionFactor;
+//    int reducedGridSize = settings.grid_size / sdfReductionFactor;
 //
 //    // Map screen-space UV to grid coordinates
 //    ivec2 gridPos = ivec2(uv * reducedGridSize);
@@ -241,7 +246,7 @@ void main() {
 //    vec3 color;
 //    if (distance < 1e6) {
 //        // Normalize distance and map to color gradient
-//        float normalizedDistance = clamp(distance / float(gridSize), 0.0, 1.0);
+//        float normalizedDistance = clamp(distance / float(settings.grid_size), 0.0, 1.0);
 //        color = vec3(1.0 - normalizedDistance, normalizedDistance, 0.0); // Gradient from red to green
 //    } else {
 //        color = vec3(0.0, 0.0, 0.0); // Empty cells are black

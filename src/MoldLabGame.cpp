@@ -14,7 +14,6 @@ MoldLabGame::MoldLabGame(int width, int height, const std::string& title)
 : GameEngine(width, height, title) {
     spores = new Spore[SPORE_COUNT]();
 
-
     displayFramerate = true;
 }
 
@@ -70,7 +69,6 @@ void MoldLabGame::initializeUniformVariables() {
 
     cameraPositionSV = ShaderVariable(shaderProgram, &cameraPosition, "cameraPosition");
     focusPointSV = ShaderVariable(shaderProgram, &focusPoint, "focusPoint");
-    gridSizeSV = ShaderVariable(shaderProgram, &gridSize, "gridSize");
     moveDeltaTimeSV = ShaderVariable(moveSporesShaderProgram, &deltaTimeStorage, "deltaTime");
     decayDeltaTimeSV = ShaderVariable(decaySporesShaderProgram, &deltaTimeStorage, "deltaTime");
     jfaStepSV = ShaderVariable(jumpFloodStepShaderProgram, &jfaStep, "stepSize");
@@ -229,7 +227,7 @@ void MoldLabGame::DispatchComputeShaders() {
 
     glUseProgram(jumpFloodStepShaderProgram);
 
-    int stepSize = reducedGridSize / 2; // TODO: Make sure this is correct, may need to be doubled
+    int stepSize = reducedGridSize / 2;
     int iterations = 0;
     int testStopping = 1;
 
@@ -339,11 +337,8 @@ void MoldLabGame::render() {
     // While using the
     glUseProgram(shaderProgram);
 
-    gridSizeSV.uploadToShader();
     cameraPositionSV.uploadToShader();
     focusPointSV.uploadToShader();
-    glUniform1i(glGetUniformLocation(shaderProgram, "sdfReductionFactor"), SDF_REDUCTION_FACTOR);
-
 
     // Draw the full-screen quad
     glBindVertexArray(triangleVao);

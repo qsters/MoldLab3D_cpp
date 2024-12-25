@@ -5,7 +5,8 @@
 
 #include "GameEngine.h"
 #include "ShaderVariable.h"
-#include "SimulationData.h"
+#include "SimulationSettings.h"
+#include "Spore.h"
 
 
 constexpr int GRID_SIZE = 300;
@@ -47,7 +48,7 @@ private:
     GLuint triangleVbo = 0, triangleVao = 0, voxelGridBuffer = 0, simulationSettingsBuffer = 0, sporesBuffer = 0, sdfTexBuffer1 = 0, sdfTexBuffer2 = 0;
     GLuint shaderProgram = 0, drawSporesShaderProgram = 0, moveSporesShaderProgram = 0, decaySporesShaderProgram = 0, jumpFloodInitShaderProgram = 0, jumpFloodStepShaderProgram = 0;
     ShaderVariable<vec3> cameraPositionSV, focusPointSV;
-    ShaderVariable<int> gridSizeSV, jfaStepSV;
+    ShaderVariable<int> jfaStepSV;
     ShaderVariable<float> moveDeltaTimeSV, decayDeltaTimeSV;
 
     // Dynamically allocated to reduce Stack Memory, was causing issues at large values

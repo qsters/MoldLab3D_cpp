@@ -3,15 +3,7 @@
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 
 // Simulation Settings
-struct SimulationSettings {
-    int spore_count;
-    int grid_size;
-    int sdf_reduction;
-    float spore_speed;
-    float decay_speed;
-    float turn_speed;
-    float sensor_distance;
-};
+#DEFINE_SIMULATION_SETTINGS
 
 layout(std430, binding = 0) buffer VoxelGrid {
     float voxelData[]; // 1D array representing the voxel grid

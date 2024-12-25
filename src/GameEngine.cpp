@@ -7,6 +7,8 @@
 #include <sstream>
 #include <utility>
 
+const std::string SimulationSettingsFile = "include/SimulationSettings.h";
+const std::string SimulationSettingsDefinition = "#DEFINE_SIMULATION_SETTINGS";
 
 GameEngine::GameEngine(const int width, const int height, std::string  title)
     : window(nullptr), width(width), height(height), title(std::move(title)), lastFrameTime(0.0f), deltaTime(0.0f), timeSinceStart(0.0f) {
@@ -151,17 +153,38 @@ std::pair<std::string, std::string> GameEngine::LoadCombinedShaderSource(const s
 
 GLuint GameEngine::CompileShader(const std::string& source, GLenum shader_type) {
     GLuint shader = glCreateShader(shader_type);
-    const char* source_cstr = source.c_str();
 
+    // Load SimulationSettings file
+    std::ifstream settingsFile(SimulationSettingsFile);
+    if (!settingsFile.is_open()) {
+        std::cerr << "Error: Could not open SimulationSettings file: " << SimulationSettingsFile << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    std::stringstream buffer;
+    buffer << settingsFile.rdbuf();
+    std::string settingsDefinition = buffer.str();
+
+    // Replace #SIMULATIONSETTINGS in the shader source
+    std::string processedSource = source;
+    size_t position = processedSource.find(SimulationSettingsDefinition);
+    if (position != std::string::npos) {
+        processedSource.replace(position, SimulationSettingsDefinition.length(), settingsDefinition);
+    }
+
+    // Convert processed source to C-string
+    const char* source_cstr = processedSource.c_str();
+
+    // Compile the shader
     glShaderSource(shader, 1, &source_cstr, nullptr);
     glCompileShader(shader);
 
+    // Check for compilation errors
     GLint success;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
     if (!success) {
         char infoLog[512];
         glGetShaderInfoLog(shader, 512, nullptr, infoLog);
-        std::cerr << source << " -- Shader Compilation Error: " << infoLog << std::endl;
+        std::cerr << processedSource << " -- Shader Compilation Error: " << infoLog << std::endl;
         exit(EXIT_FAILURE);
     }
 

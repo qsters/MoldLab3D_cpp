@@ -1,7 +1,5 @@
-#ifndef SIMULATIONDATA_H
-#define SIMULATIONDATA_H
-#include <cstdint>
-#include <linmath.h>
+#ifndef SIMULATIONSETTINGS_H
+#define SIMULATIONSETTINGS_H
 
 struct SimulationSettings {
     int spore_count;       // Number of spores
@@ -13,10 +11,4 @@ struct SimulationSettings {
     float sensor_distance;      // Distance spores "sense"
 };
 
-struct Spore {
-    alignas(16) vec3 position;   // Position vector: x, y, z
-    alignas(16) vec3 direction;  // Direction vector: dir_x, dir_y, dir_z
-};
-
-
-#endif //SPORESDATA_H
+#endif //SIMULATIONSETTINGS_H
