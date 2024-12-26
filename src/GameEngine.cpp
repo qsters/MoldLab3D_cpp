@@ -10,8 +10,8 @@
 const std::string SimulationSettingsFile = "include/SimulationData.h";
 const std::string SimulationSettingsDefinition = "#DEFINE_SIMULATION_SETTINGS";
 
-GameEngine::GameEngine(const int width, const int height, std::string  title)
-    : window(nullptr), width(width), height(height), title(std::move(title)), lastFrameTime(0.0f), deltaTime(0.0f), timeSinceStart(0.0f) {
+GameEngine::GameEngine(const int width, const int height, std::string  title, bool vSync)
+    : window(nullptr), width(width), height(height), title(std::move(title)), vSyncEnabled(vSync), lastFrameTime(0.0f), deltaTime(0.0f), timeSinceStart(0.0f) {
 
     init();
 }
@@ -111,6 +111,15 @@ int GameEngine::getScreenHeight() const {
 int GameEngine::getScreenWidth() const {
     auto [width, height] = getScreenSize();
     return width;
+}
+
+void GameEngine::SetvSyncStatus(bool status) {
+    vSyncEnabled = status;
+    glfwSwapInterval(int(vSyncEnabled));
+}
+
+bool GameEngine::GetvSyncStatus() {
+    return vSyncEnabled;
 }
 
 std::string GameEngine::LoadShaderSource(const std::string &filepath) {
@@ -283,12 +292,12 @@ void GameEngine::initGLFW() {
     // Set the user pointer to this instance
     glfwSetWindowUserPointer(window, this);
 
-    glfwSetKeyCallback(window, GameEngine::keyCallback);
+    glfwSetKeyCallback(window, keyCallback);
 
     glfwMakeContextCurrent(window);
     gladLoadGL();
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-    glfwSwapInterval(1); // Enable V-Sync
+    SetvSyncStatus(vSyncEnabled);
 }
 
 void GameEngine::errorCallback(int error, const char* description) {

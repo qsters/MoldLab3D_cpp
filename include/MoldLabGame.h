@@ -15,7 +15,7 @@ constexpr float SPORE_TURN_SPEED = 5.0;
 
 constexpr int SDF_REDUCTION_FACTOR = 3;
 
-constexpr float ROTATION_SPEED =  35.0f;
+constexpr float ROTATION_SPEED =  100.0f;
 
 struct InputState {
     bool isDPressed = false;
@@ -52,7 +52,7 @@ private:
 
     float horizontalAngle = 90.0f; // Rotation angle around the Y-axis
     float verticalAngle = 0.0f;   // Rotation angle around the X-axis
-    float orbitRadius = GRID_SIZE * 0.75;    // Distance from the origin
+    float orbitRadius = GRID_SIZE * 1.25;    // Distance from the origin
     float rotationSpeed = 1.0f;   // Speed of rotation
 
 

@@ -11,7 +11,7 @@
 // ============================
 
 MoldLabGame::MoldLabGame(int width, int height, const std::string& title)
-: GameEngine(width, height, title) {
+: GameEngine(width, height, title, false) {
     spores = new Spore[SPORE_COUNT]();
 
     displayFramerate = true;
@@ -114,7 +114,6 @@ void MoldLabGame::initializeSDFBuffer() {
 
 
 void uploadSettingsBuffer(GLuint simulationSettingsBuffer, SimulationData& settings) {
-    std::cout << settings.delta_time << std::endl;
     glGenBuffers(1, &simulationSettingsBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, simulationSettingsBuffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(SimulationData), &settings, GL_STATIC_DRAW);

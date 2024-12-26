@@ -12,7 +12,7 @@
 // Abstract base class for game engines
 class GameEngine {
 public:
-    GameEngine(int width, int height, std::string  title);
+    GameEngine(int width, int height, std::string  title, bool vSync);
     virtual ~GameEngine();
 
     void run(); // Main game loop
@@ -33,6 +33,9 @@ public:
 
     // Error catcher helper function
     static void CheckGLError(const std::string& context);
+
+    bool GetvSyncStatus();
+    void SetvSyncStatus(bool status);
 
 
 protected:
@@ -89,6 +92,8 @@ private:
     int maxWorkGroupCountX, maxWorkGroupCountY, maxWorkGroupCountZ;
     int maxWorkGroupSizeX, maxWorkGroupSizeY, maxWorkGroupSizeZ;
 
+
+    bool vSyncEnabled;
 
 
     // Callback setup
