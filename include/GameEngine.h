@@ -23,17 +23,18 @@ public:
 
     static std::string LoadShaderSource(const std::string& filepath);
     static std::pair<std::string, std::string> LoadCombinedShaderSource(const std::string& filepath);
-    static GLuint CompileShader(const std::string& source, GLenum shader_type);
+    GLuint CompileShader(const std::string& source, GLenum shader_type);
 
-    static GLuint CompileAndAttachShader(const std::string &source, GLenum shaderType, GLuint program);
+    GLuint CompileAndAttachShader(const std::string &source, GLenum shaderType, GLuint program);
 
-    static GLuint CreateShaderProgram(const std::vector<std::tuple<std::string, GLenum, bool>>& shaders);
+    GLuint CreateShaderProgram(const std::vector<std::tuple<std::string, GLenum, bool>>& shaders);
 
     static void CheckProgramLinking(GLuint program);
 
     // Error catcher helper function
     static void CheckGLError(const std::string& context);
 
+    void addShaderDefinition(const std::string& placeholder, const std::string& filePath);
 
     bool GetvSyncStatus() const;
     void SetvSyncStatus(bool status);
@@ -93,7 +94,6 @@ private:
     int maxWorkGroupCountX, maxWorkGroupCountY, maxWorkGroupCountZ;
     int maxWorkGroupSizeX, maxWorkGroupSizeY, maxWorkGroupSizeZ;
 
-
     bool vSyncEnabled;
 
 
@@ -101,6 +101,11 @@ private:
     static void errorCallback(int error, const char* description);
     static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
     static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
+
+    std::unordered_map<std::string, std::string> shaderDefinitions = {
+        {"#DEFINE_SIMULATION_SETTINGS", "include/SimulationData.h"},
+    };
+
 };
 
 #endif // GAMEENGINE_H

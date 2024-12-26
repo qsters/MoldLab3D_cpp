@@ -13,8 +13,9 @@
 MoldLabGame::MoldLabGame(int width, int height, const std::string &title)
     : GameEngine(width, height, title, false) {
     spores = new Spore[SPORE_COUNT]();
-
     displayFramerate = true;
+
+    GameEngine::addShaderDefinition("#DEFINE_SIMULATION_SETTINGS", "include/SimulationData.h");
 }
 
 MoldLabGame::~MoldLabGame() {

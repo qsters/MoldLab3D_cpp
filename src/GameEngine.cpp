@@ -160,35 +160,40 @@ std::pair<std::string, std::string> GameEngine::LoadCombinedShaderSource(const s
     return { vertex_shader_stream.str(), fragment_shader_stream.str() };
 }
 
+
+
 GLuint GameEngine::CompileShader(const std::string& source, GLenum shader_type) {
     GLuint shader = glCreateShader(shader_type);
 
-    // Load SimulationSettings file
-    std::ifstream settingsFile(SimulationSettingsFile);
-    if (!settingsFile.is_open()) {
-        std::cerr << "Error: Could not open SimulationSettings file: " << SimulationSettingsFile << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    std::stringstream buffer;
-    buffer << settingsFile.rdbuf();
-    std::string settingsDefinition = buffer.str();
-
-    // Preprocess the settings definition to remove lines with #DEFINE_REMOVE_FROM_SHADER
-    std::istringstream input(settingsDefinition);
-    std::ostringstream output;
-    std::string line;
-    while (std::getline(input, line)) {
-        if (line.find("#DEFINE_REMOVE_FROM_SHADER") == std::string::npos) {
-            output << line << '\n';
-        }
-    }
-    settingsDefinition = output.str();
-
-    // Replace #SIMULATIONSETTINGS in the shader source
+    // Start with the original source
     std::string processedSource = source;
-    size_t position = processedSource.find(SimulationSettingsDefinition);
-    if (position != std::string::npos) {
-        processedSource.replace(position, SimulationSettingsDefinition.length(), settingsDefinition);
+
+    // Replace each placeholder with its corresponding definition
+    for (const auto& [placeholder, filePath] : shaderDefinitions) {
+        std::ifstream file(filePath);
+        if (!file.is_open()) {
+            std::cerr << "Error: Could not open shader definition file: " << filePath << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+
+        // Preprocess the definition to exclude lines with #DEFINE_REMOVE_FROM_SHADER
+        std::string definition;
+        std::string line;
+        std::istringstream input(buffer.str());
+        std::ostringstream output;
+        while (std::getline(input, line)) {
+            if (line.find("#DEFINE_REMOVE_FROM_SHADER") == std::string::npos) {
+                output << line << '\n';
+            }
+        }
+        definition = output.str();
+        // Replace placeholder in the shader source
+        size_t position = processedSource.find(placeholder);
+        if (position != std::string::npos) {
+            processedSource.replace(position, placeholder.length(), definition);
+        }
     }
 
     // Convert processed source to C-string
@@ -210,6 +215,11 @@ GLuint GameEngine::CompileShader(const std::string& source, GLenum shader_type) 
 
     return shader;
 }
+
+void GameEngine::addShaderDefinition(const std::string &placeholder, const std::string &filePath) {
+    shaderDefinitions[placeholder] = filePath;
+}
+
 
 GLuint GameEngine::CompileAndAttachShader(const std::string& source, GLenum shaderType, GLuint program) {
     GLuint shader = CompileShader(source, shaderType);
