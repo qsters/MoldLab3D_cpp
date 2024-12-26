@@ -10,8 +10,8 @@
 const std::string SimulationSettingsFile = "include/SimulationData.h";
 const std::string SimulationSettingsDefinition = "#DEFINE_SIMULATION_SETTINGS";
 
-GameEngine::GameEngine(const int width, const int height, std::string  title, bool vSync)
-    : window(nullptr), width(width), height(height), title(std::move(title)), vSyncEnabled(vSync), lastFrameTime(0.0f), deltaTime(0.0f), timeSinceStart(0.0f) {
+GameEngine::GameEngine(const int width, const int height, std::string  title, const bool vSync)
+    : window(nullptr), width(width), height(height), title(std::move(title)), lastFrameTime(0.0f), deltaTime(0.0f), timeSinceStart(0.0f), vSyncEnabled(vSync) {
 
     init();
 }
@@ -22,10 +22,9 @@ void GameEngine::init() {
     ComputeShaderInitializationAndCheck();
 }
 
-void GameEngine::initImGui() {
+void GameEngine::initImGui() const {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); // Configuration if needed
 
     // Setup platform/renderer bindings
     ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -45,9 +44,9 @@ GameEngine::~GameEngine() {
     glfwTerminate();
 }
 
-void GameEngine::printFramerate(float& frameTimeAccumulator, int& frameCount) {
+void GameEngine::printFramerate(float& frameTimeAccumulator, int& frameCount) const {
     if (displayFramerate && frameTimeAccumulator >= 1.0f) {
-        float averageFrameRate = frameCount / frameTimeAccumulator;
+        const float averageFrameRate = static_cast<float>(frameCount) / frameTimeAccumulator;
         std::cout << "Average Frame Rate: " << averageFrameRate << " FPS" << std::endl;
 
         frameCount = 0;
@@ -65,7 +64,7 @@ void GameEngine::run() {
 
     while (!glfwWindowShouldClose(window)) {
         // Calculate delta time
-        float currentTime = static_cast<float>(glfwGetTime());
+        const float currentTime = static_cast<float>(glfwGetTime());
         deltaTime = currentTime - lastFrameTime;
         lastFrameTime = currentTime;
 
@@ -113,12 +112,12 @@ int GameEngine::getScreenWidth() const {
     return width;
 }
 
-void GameEngine::SetvSyncStatus(bool status) {
+void GameEngine::SetVsyncStatus(const bool status) {
     vSyncEnabled = status;
-    glfwSwapInterval(int(vSyncEnabled));
+    glfwSwapInterval(static_cast<int>(vSyncEnabled));
 }
 
-bool GameEngine::GetvSyncStatus() const {
+bool GameEngine::GetVsyncStatus() const {
     return vSyncEnabled;
 }
 
@@ -221,8 +220,8 @@ void GameEngine::addShaderDefinition(const std::string &placeholder, const std::
 }
 
 
-GLuint GameEngine::CompileAndAttachShader(const std::string& source, GLenum shaderType, GLuint program) {
-    GLuint shader = CompileShader(source, shaderType);
+GLuint GameEngine::CompileAndAttachShader(const std::string& source, const GLenum shaderType, const GLuint program) {
+    const GLuint shader = CompileShader(source, shaderType);
     glAttachShader(program, shader);
     return shader;
 }
@@ -230,7 +229,7 @@ GLuint GameEngine::CompileAndAttachShader(const std::string& source, GLenum shad
 
 GLuint GameEngine::CreateShaderProgram(const std::vector<std::tuple<std::string, GLenum, bool>>& shaders) {
     // Create a new program
-    GLuint program = glCreateProgram();
+    const GLuint program = glCreateProgram();
 
     // Keep track of all shaders to clean up later
     std::vector<GLuint> shaderObjects;
@@ -259,7 +258,7 @@ GLuint GameEngine::CreateShaderProgram(const std::vector<std::tuple<std::string,
     CheckProgramLinking(program);
 
     // Detach and delete the shaders after linking
-    for (GLuint shader : shaderObjects) {
+    for (const GLuint shader : shaderObjects) {
         glDetachShader(program, shader);
         glDeleteShader(shader);
     }
@@ -270,7 +269,7 @@ GLuint GameEngine::CreateShaderProgram(const std::vector<std::tuple<std::string,
 
 
 
-void GameEngine::CheckProgramLinking(GLuint program) {
+void GameEngine::CheckProgramLinking(const GLuint program) {
     GLint success;
     glGetProgramiv(program, GL_LINK_STATUS, &success);
     if (!success) {
@@ -307,19 +306,19 @@ void GameEngine::initGLFW() {
     glfwMakeContextCurrent(window);
     gladLoadGL();
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-    SetvSyncStatus(vSyncEnabled);
+    SetVsyncStatus(vSyncEnabled);
 }
 
 void GameEngine::errorCallback(int error, const char* description) {
     std::cerr << "Error: " << description << std::endl;
 }
 
-void GameEngine::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+void GameEngine::keyCallback(GLFWwindow *window, const int key, int scancode, const int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
         glfwSetWindowShouldClose(window, GLFW_TRUE); // Close window on Escape key
 }
 
-void GameEngine::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+void GameEngine::framebufferSizeCallback(GLFWwindow* window, const int width, const int height) {
     glViewport(0, 0, width, height);
 }
 
@@ -416,8 +415,8 @@ int GameEngine::getMaxWorkGroupSizeZ() const {
     return maxWorkGroupSizeZ;
 }
 
-void GameEngine::DispatchComputeShader(GLuint computeShaderProgram,
-                                       int itemsX, int itemsY, int itemsZ) {
+void GameEngine::DispatchComputeShader(const GLuint computeShaderProgram,
+                                       const int itemsX, const int itemsY, const int itemsZ) const {
     if (itemsX < 1 || itemsY < 1 || itemsZ < 1) {
         throw std::runtime_error("Dispatch item must be above 0");
     }
@@ -429,14 +428,14 @@ void GameEngine::DispatchComputeShader(GLuint computeShaderProgram,
     GLint localSize[3];
     glGetProgramiv(computeShaderProgram, GL_COMPUTE_WORK_GROUP_SIZE, localSize);
 
-    int localSizeX = localSize[0];
-    int localSizeY = localSize[1];
-    int localSizeZ = localSize[2];
+    const int localSizeX = localSize[0];
+    const int localSizeY = localSize[1];
+    const int localSizeZ = localSize[2];
 
     // Calculate the number of work groups required for each dimension
-    int workGroupCountX = (itemsX + localSizeX - 1) / localSizeX; // ceil(itemsX / localSizeX)
-    int workGroupCountY = (itemsY + localSizeY - 1) / localSizeY;
-    int workGroupCountZ = (itemsZ + localSizeZ - 1) / localSizeZ;
+    const int workGroupCountX = (itemsX + localSizeX - 1) / localSizeX; // ceil(itemsX / localSizeX)
+    const int workGroupCountY = (itemsY + localSizeY - 1) / localSizeY;
+    const int workGroupCountZ = (itemsZ + localSizeZ - 1) / localSizeZ;
 
     // Validate against maximum work group count bounds
     if (workGroupCountX > maxWorkGroupCountX ||
@@ -457,6 +456,7 @@ void GameEngine::DispatchComputeShader(GLuint computeShaderProgram,
 
     // Check for errors
     GLenum err;
+    // ReSharper disable once CppDFALoopConditionNotUpdated
     while ((err = glGetError()) != GL_NO_ERROR) {
         std::cerr << "OpenGL Error: " << err << std::endl;
         throw std::runtime_error("Error occurred during compute shader dispatch.");

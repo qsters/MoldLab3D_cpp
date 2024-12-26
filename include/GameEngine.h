@@ -36,8 +36,8 @@ public:
 
     void addShaderDefinition(const std::string& placeholder, const std::string& filePath);
 
-    bool GetvSyncStatus() const;
-    void SetvSyncStatus(bool status);
+    bool GetVsyncStatus() const;
+    void SetVsyncStatus(bool status);
 
 
 protected:
@@ -63,7 +63,7 @@ protected:
     [[nodiscard]] float TimeSinceStart() const;
     [[nodiscard]] float DeltaTime() const;
 
-    void DispatchComputeShader(GLuint computeShaderProgram, int itemsX, int itemsY, int itemsZ);
+    void DispatchComputeShader(GLuint computeShaderProgram, int itemsX, int itemsY, int itemsZ) const;
 
     bool displayFramerate = false;
     InputManager inputManager;
@@ -75,10 +75,10 @@ private:
     // Core initialization
     void init();
     void initGLFW();
-    void initImGui();
+    void initImGui() const;
 
 
-    void printFramerate(float& frameTimeAccumulator, int& frameCount);
+    void printFramerate(float& frameTimeAccumulator, int& frameCount) const;
     void ComputeShaderInitializationAndCheck();
 
     // Window and context
@@ -91,8 +91,8 @@ private:
     float deltaTime;
     float timeSinceStart;
 
-    int maxWorkGroupCountX, maxWorkGroupCountY, maxWorkGroupCountZ;
-    int maxWorkGroupSizeX, maxWorkGroupSizeY, maxWorkGroupSizeZ;
+    int maxWorkGroupCountX{}, maxWorkGroupCountY{}, maxWorkGroupCountZ{};
+    int maxWorkGroupSizeX{}, maxWorkGroupSizeY{}, maxWorkGroupSizeZ{};
 
     bool vSyncEnabled;
 
