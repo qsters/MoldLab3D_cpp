@@ -32,6 +32,8 @@ public:
     MoldLabGame(int width, int height, const std::string& title);
     ~MoldLabGame() override;
 
+    static Spore CreateRandomSpore();
+
 protected:
     // Core functions
     void renderingStart() override;
@@ -65,6 +67,7 @@ private:
     void initializeVoxelGridBuffer();
     void initializeSDFBuffer();
     void initializeSimulationBuffers();
+    void initializeSpores();
 
     // Update Helpers
     void HandleCameraMovement(float orbitRadius, float deltaTime);

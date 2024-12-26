@@ -34,6 +34,7 @@ public:
     // Error catcher helper function
     static void CheckGLError(const std::string& context);
 
+
     bool GetvSyncStatus() const;
     void SetvSyncStatus(bool status);
 

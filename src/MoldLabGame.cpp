@@ -10,19 +10,24 @@
 // Constructor/Destructor
 // ============================
 
-MoldLabGame::MoldLabGame(int width, int height, const std::string& title)
-: GameEngine(width, height, title, false) {
+MoldLabGame::MoldLabGame(int width, int height, const std::string &title)
+    : GameEngine(width, height, title, false) {
     spores = new Spore[SPORE_COUNT]();
 
     displayFramerate = true;
 }
 
 MoldLabGame::~MoldLabGame() {
-    if (triangleVbo) glDeleteBuffers(1, &triangleVbo);
-    if (triangleVao) glDeleteVertexArrays(1, &triangleVao);
-    if (voxelGridBuffer) glDeleteBuffers(1, &voxelGridBuffer);
-    if (sporesBuffer) glDeleteBuffers(1, &sporesBuffer);
-    if (simulationSettingsBuffer) glDeleteBuffers(1, &simulationSettingsBuffer);
+    if (triangleVbo)
+        glDeleteBuffers(1, &triangleVbo);
+    if (triangleVao)
+        glDeleteVertexArrays(1, &triangleVao);
+    if (voxelGridBuffer)
+        glDeleteBuffers(1, &voxelGridBuffer);
+    if (sporesBuffer)
+        glDeleteBuffers(1, &sporesBuffer);
+    if (simulationSettingsBuffer)
+        glDeleteBuffers(1, &simulationSettingsBuffer);
 
     delete[] spores;
 
@@ -79,7 +84,8 @@ void MoldLabGame::initializeVertexBuffers() {
 
     // Enable and set the position attribute
     glEnableVertexAttribArray(positionAttributeLocation);
-    glVertexAttribPointer(positionAttributeLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, position)));
+    glVertexAttribPointer(positionAttributeLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          reinterpret_cast<void *>(offsetof(Vertex, position)));
 
     glBindVertexArray(0); // Unbind VAO
 }
@@ -109,11 +115,10 @@ void MoldLabGame::initializeSDFBuffer() {
     glGenTextures(1, &sdfTexBuffer2);
     glBindTexture(GL_TEXTURE_3D, sdfTexBuffer2);
     glTexStorage3D(GL_TEXTURE_3D, 1, GL_RGBA32F, reducedGridSize, reducedGridSize, reducedGridSize);
-
 }
 
 
-void uploadSettingsBuffer(GLuint simulationSettingsBuffer, SimulationData& settings) {
+void uploadSettingsBuffer(GLuint simulationSettingsBuffer, SimulationData &settings) {
     glGenBuffers(1, &simulationSettingsBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, simulationSettingsBuffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(SimulationData), &settings, GL_STATIC_DRAW);
@@ -139,6 +144,38 @@ void MoldLabGame::initializeSimulationBuffers() {
     delete[] spores;
     spores = nullptr; // Set to nullptr for safety
 }
+
+Spore MoldLabGame::CreateRandomSpore() {
+    Spore spore{};
+
+    // Random position between 0 and GRID_SIZE - 1
+    spore.position[0] = static_cast<float>(rand() % GRID_SIZE);
+    spore.position[1] = static_cast<float>(rand() % GRID_SIZE);
+    spore.position[2] = static_cast<float>(rand() % GRID_SIZE);
+
+    // Random direction vector (normalized)
+    float dirX = static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f; // Range [-1, 1]
+    float dirY = static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f;
+    float dirZ = static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f;
+
+    float magnitude = sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
+    spore.direction[0] = dirX / magnitude;
+    spore.direction[1] = dirY / magnitude;
+    spore.direction[2] = dirZ / magnitude;
+    
+    return spore;
+}
+
+
+void MoldLabGame::initializeSpores() {
+    srand(static_cast<unsigned int>(time(0)));
+
+    for (int i = 0; i < SPORE_COUNT; i++) {
+
+        spores[i] = CreateRandomSpore();
+    }
+}
+
 
 // ============================
 // Update Helpers
@@ -181,7 +218,7 @@ void MoldLabGame::HandleCameraMovement(float orbitRadius, float deltaTime) {
     float z = orbitRadius * cos(altitude) * cos(azimuth);
 
     // Get the focus point position
-    const vec3& focusPoint = simulationSettings.camera_focus;
+    const vec3 &focusPoint = simulationSettings.camera_focus;
 
     // Offset camera position by focus point
     set_vec3(simulationSettings.camera_position, focusPoint[0] + x, focusPoint[1] + y, focusPoint[2] + z);
@@ -206,9 +243,9 @@ void MoldLabGame::DispatchComputeShaders() {
 
 
     int reducedGridSize = GRID_SIZE / SDF_REDUCTION_FACTOR;
-    DispatchComputeShader(jumpFloodInitShaderProgram, reducedGridSize, reducedGridSize, reducedGridSize); // inits the read, for later use
+    DispatchComputeShader(jumpFloodInitShaderProgram, reducedGridSize, reducedGridSize, reducedGridSize);
+    // inits the read, for later use
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-
 
 
     glUseProgram(jumpFloodStepShaderProgram);
@@ -227,7 +264,7 @@ void MoldLabGame::DispatchComputeShaders() {
         jfaStepSV.uploadToShader();
 
 
-        DispatchComputeShader(jumpFloodStepShaderProgram, reducedGridSize, reducedGridSize , reducedGridSize);
+        DispatchComputeShader(jumpFloodStepShaderProgram, reducedGridSize, reducedGridSize, reducedGridSize);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         stepSize /= 2; // Halve step size
         std::swap(readTexture, writeTexture);
@@ -237,7 +274,8 @@ void MoldLabGame::DispatchComputeShaders() {
         }
     }
 
-    glBindImageTexture(0, readTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F); // set to read after last swap for rendering
+    glBindImageTexture(0, readTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
+    // set to read after last swap for rendering
 }
 
 
@@ -264,29 +302,7 @@ void MoldLabGame::renderingStart() {
     simulationSettings.turn_speed = SPORE_TURN_SPEED;
     simulationSettings.sensor_distance = SPORE_SENSOR_DISTANCE;
 
-    srand(static_cast<unsigned int>(time(0)));
-
-    for (int i = 0; i < SPORE_COUNT; i++) {
-        Spore spore;
-
-        // Random position between 0 and GRID_SIZE - 1
-        spore.position[0] = static_cast<float>(rand() % GRID_SIZE);
-        spore.position[1] = static_cast<float>(rand() % GRID_SIZE);
-        spore.position[2] = static_cast<float>(rand() % GRID_SIZE);
-
-        // Random direction vector (normalized)
-        float dirX = static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f; // Range [-1, 1]
-        float dirY = static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f;
-        float dirZ = static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f;
-
-        float magnitude = sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
-        spore.direction[0] = dirX / magnitude;
-        spore.direction[1] = dirY / magnitude;
-        spore.direction[2] = dirZ / magnitude;
-
-        spores[i] = spore;
-    }
-
+    initializeSpores();
 
     initializeSimulationBuffers();
 }
@@ -298,7 +314,6 @@ void MoldLabGame::start() {
     inputManager.bindKeyState(GLFW_KEY_RIGHT, &inputState.isRightPressed);
     inputManager.bindKeyState(GLFW_KEY_UP, &inputState.isUpPressed);
     inputManager.bindKeyState(GLFW_KEY_DOWN, &inputState.isDownPressed);
-
 }
 
 void MoldLabGame::update(float deltaTime) {
