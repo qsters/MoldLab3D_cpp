@@ -21,10 +21,8 @@ layout(std430, binding = 1) buffer SporesBuffer {
 };
 
 layout(std430, binding = 2) buffer SettingsBuffer {
-    SimulationSettings settings;
+    SimulationData settings;
 };
-
-uniform float deltaTime;
 
 
 float sense(vec3 position, vec3 direction, int gridSize, float sensorDistance) {
@@ -55,7 +53,7 @@ void main() {
     Spore spore = spores[sporeID];
 
     // Calculate the new position by moving forward in the direction of the spore's direction vector
-    vec3 newPosition = spore.position + spore.direction * settings.spore_speed * deltaTime;
+    vec3 newPosition = spore.position + spore.direction * settings.spore_speed * settings.delta_time;
     vec3 newDirection = spore.direction;
 
     vec3 forward = spore.direction;
@@ -86,7 +84,7 @@ void main() {
         directionChange += verticalDirection;
     }
 
-    newDirection = normalize(forward + directionChange * settings.turn_speed * deltaTime);
+    newDirection = normalize(forward + directionChange * settings.turn_speed * settings.delta_time);
 
     // Boundary Hit Handler
     vec3 storePosition = newPosition;

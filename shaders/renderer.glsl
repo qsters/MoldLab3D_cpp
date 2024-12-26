@@ -16,8 +16,6 @@ void main() {
 #version 430 core
 
 in vec2 uv;
-uniform vec3 cameraPosition;
-uniform vec3 focusPoint;
 
 uniform float testValue;
 
@@ -36,7 +34,7 @@ layout(std430, binding = 0) buffer VoxelGrid {
 };
 
 layout(std430, binding = 2) buffer SettingsBuffer {
-    SimulationSettings settings;
+    SimulationData settings;
 };
 
 // After dispatching, buffer 4 is the data to read from for rendering
@@ -85,7 +83,7 @@ float map_the_world(in vec3 point) {
     ivec3 searchPoint = center / sdfReductionFactor;
     vec4 sdfValue = imageLoad(sdfData, searchPoint);
 
-    float cameraSDF = distance_from_sphere(point, cameraPosition, float(settings.grid_size) / 4.0);
+    float cameraSDF = distance_from_sphere(point, settings.camera_position, float(settings.grid_size) / 4.0);
 
     // skip this if the closest cube is less than the max betwen the search radius and the reduction factor times by the diagonal of the cube to make sure it will account for diagonal movement.
     if (sdfValue.w > max(sdfReductionFactor, searchRadius) * 1.8) {
@@ -167,7 +165,7 @@ vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
         vec3 current_position = rayOrigin + total_distance_traveled * rayDirection;
 
         // If traveled too far, or exited the bounds, return red (for now)
-        if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE || distance_from_cube(current_position, focusPoint, settings.grid_size) > 1) {
+        if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE || distance_from_cube(current_position, settings.camera_focus, settings.grid_size) > 1) {
             return vec3(i / float(NUMBER_OF_STEPS), 0.0, 0.0);
         }
 
@@ -195,13 +193,13 @@ bool intersectsAABB(vec3 rayOrigin, vec3 rayDirection, vec3 gridMin, vec3 gridMa
 
 void main() {
     // Calculate camera orientation
-    vec3 forward = normalize(focusPoint - cameraPosition); // Forward direction
+    vec3 forward = normalize(settings.camera_focus - settings.camera_position); // Forward direction
     vec3 worldUp = vec3(0.0, 1.0, 0.0); // World up vector
     vec3 right = normalize(cross(worldUp, forward)); // Right vector
     vec3 up = cross(forward, right); // Up vector
 
     // Ray origin and direction
-    vec3 rayOrigin = cameraPosition;
+    vec3 rayOrigin = settings.camera_position;
     vec3 rayDirection = normalize(uv.x * right + uv.y * up + forward); // Combine screen-space uv with camera orientation
 
     vec3 gridMin = vec3(0.0);

@@ -11,10 +11,8 @@ layout(std430, binding = 0) buffer VoxelGrid {
 };
 
 layout(std430, binding = 2) buffer SettingsBuffer {
-    SimulationSettings settings;
+    SimulationData settings;
 };
-
-uniform float deltaTime;
 
 
 void main() {
@@ -32,5 +30,5 @@ void main() {
     uint idx = z * settings.grid_size * settings.grid_size + y * settings.grid_size + x;
 
     // Apply decay to the voxel value
-    voxelData[idx] = max(0.0, voxelData[idx] - settings.decay_speed * deltaTime);
+    voxelData[idx] = max(0.0, voxelData[idx] - settings.decay_speed * settings.delta_time);
 }

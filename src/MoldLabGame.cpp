@@ -61,16 +61,8 @@ void MoldLabGame::initializeShaders() {
 
 
 void MoldLabGame::initializeUniformVariables() {
-    static vec3 cameraPosition = {GRID_SIZE / 2.0, GRID_SIZE * 1.4, GRID_SIZE * 1.4};
-    static vec3 focusPoint = {0.0f, 0.0f, 0.0f};
-    static int gridSize = GRID_SIZE;
     static int jfaStep = GRID_SIZE;
-    static float deltaTimeStorage;
 
-    cameraPositionSV = ShaderVariable(shaderProgram, &cameraPosition, "cameraPosition");
-    focusPointSV = ShaderVariable(shaderProgram, &focusPoint, "focusPoint");
-    moveDeltaTimeSV = ShaderVariable(moveSporesShaderProgram, &deltaTimeStorage, "deltaTime");
-    decayDeltaTimeSV = ShaderVariable(decaySporesShaderProgram, &deltaTimeStorage, "deltaTime");
     jfaStepSV = ShaderVariable(jumpFloodStepShaderProgram, &jfaStep, "stepSize");
 }
 
@@ -121,10 +113,11 @@ void MoldLabGame::initializeSDFBuffer() {
 }
 
 
-void uploadSettingsBuffer(GLuint simulationSettingsBuffer, SimulationSettings& settings) {
+void uploadSettingsBuffer(GLuint simulationSettingsBuffer, SimulationData& settings) {
+    std::cout << settings.delta_time << std::endl;
     glGenBuffers(1, &simulationSettingsBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, simulationSettingsBuffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(SimulationSettings), &settings, GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(SimulationData), &settings, GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, simulationSettingsBuffer); // Binding index 2 for settings
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
@@ -158,7 +151,7 @@ void MoldLabGame::HandleCameraMovement(float orbitRadius, float deltaTime) {
     angle += ROTATION_SPEED * deltaTime;
 
     float gridCenter = (GRID_SIZE - 1.0f) * 0.5f; // Adjust for the centered cube positions
-    set_vec3(*focusPointSV.value, gridCenter, gridCenter, gridCenter);
+    set_vec3(simulationSettings.camera_focus, gridCenter, gridCenter, gridCenter);
 
     // Adjust horizontal angle
     if (inputState.isLeftPressed) {
@@ -189,24 +182,18 @@ void MoldLabGame::HandleCameraMovement(float orbitRadius, float deltaTime) {
     float z = orbitRadius * cos(altitude) * cos(azimuth);
 
     // Get the focus point position
-    const vec3& focusPoint = *focusPointSV.value;
+    const vec3& focusPoint = simulationSettings.camera_focus;
 
     // Offset camera position by focus point
-    set_vec3(*cameraPositionSV.value, focusPoint[0] + x, focusPoint[1] + y, focusPoint[2] + z);
+    set_vec3(simulationSettings.camera_position, focusPoint[0] + x, focusPoint[1] + y, focusPoint[2] + z);
 }
 
 void MoldLabGame::DispatchComputeShaders() {
     uploadSettingsBuffer(simulationSettingsBuffer, simulationSettings);
 
-    glUseProgram(decaySporesShaderProgram);
-
-    decayDeltaTimeSV.uploadToShader();
 
     DispatchComputeShader(decaySporesShaderProgram, GRID_SIZE, GRID_SIZE, GRID_SIZE);
 
-    glUseProgram(moveSporesShaderProgram);
-
-    moveDeltaTimeSV.uploadToShader();
 
     DispatchComputeShader(moveSporesShaderProgram, SPORE_COUNT, 1, 1);
     DispatchComputeShader(drawSporesShaderProgram, SPORE_COUNT, 1, 1);
@@ -318,8 +305,7 @@ void MoldLabGame::start() {
 void MoldLabGame::update(float deltaTime) {
     HandleCameraMovement(orbitRadius, deltaTime);
 
-    *moveDeltaTimeSV.value = deltaTime;
-    *decayDeltaTimeSV.value = deltaTime;
+    simulationSettings.delta_time = deltaTime;
 
     float orbitDistanceChange = 40.0;
 
@@ -336,9 +322,6 @@ void MoldLabGame::update(float deltaTime) {
 void MoldLabGame::render() {
     // While using the
     glUseProgram(shaderProgram);
-
-    cameraPositionSV.uploadToShader();
-    focusPointSV.uploadToShader();
 
     // Draw the full-screen quad
     glBindVertexArray(triangleVao);

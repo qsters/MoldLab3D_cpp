@@ -1,7 +1,7 @@
-#ifndef SIMULATIONSETTINGS_H
-#define SIMULATIONSETTINGS_H
+#ifndef SIMULATIONDATA_H
+#define SIMULATIONDATA_H
 
-struct SimulationSettings {
+struct SimulationData {
     int spore_count;       // Number of spores
     int grid_size;   // Size of the simulation grid
     int sdf_reduction;
@@ -9,6 +9,11 @@ struct SimulationSettings {
     float decay_speed;          // Decay speed
     float turn_speed;           // Turning speed for spores
     float sensor_distance;      // Distance spores "sense"
+    float delta_time;
+    vec3 camera_position;
+    float padding1;  // #DEFINE_REMOVE_FROM_SHADER
+    vec3 camera_focus;
+    float padding2; // #DEFINE_REMOVE_FROM_SHADER
 };
 
-#endif //SIMULATIONSETTINGS_H
+#endif //SIMULATIONDATA_H

@@ -10,7 +10,7 @@ layout(std430, binding = 0) buffer VoxelGrid {
 };
 
 layout(std430, binding = 2) buffer SettingsBuffer {
-    SimulationSettings settings;
+    SimulationData settings;
 };
 
 layout(rgba32f, binding = 0) uniform readonly image3D readSDFData; // just updated to using textures instead of an array buffer

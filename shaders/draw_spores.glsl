@@ -21,7 +21,7 @@ layout(std430, binding = 1) buffer SporesBuffer {
 };
 
 layout(std430, binding = 2) buffer SettingsBuffer {
-    SimulationSettings settings;
+    SimulationData settings;
 };
 
 

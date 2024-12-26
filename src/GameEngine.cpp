@@ -7,7 +7,7 @@
 #include <sstream>
 #include <utility>
 
-const std::string SimulationSettingsFile = "include/SimulationSettings.h";
+const std::string SimulationSettingsFile = "include/SimulationData.h";
 const std::string SimulationSettingsDefinition = "#DEFINE_SIMULATION_SETTINGS";
 
 GameEngine::GameEngine(const int width, const int height, std::string  title)
@@ -163,6 +163,17 @@ GLuint GameEngine::CompileShader(const std::string& source, GLenum shader_type) 
     std::stringstream buffer;
     buffer << settingsFile.rdbuf();
     std::string settingsDefinition = buffer.str();
+
+    // Preprocess the settings definition to remove lines with #DEFINE_REMOVE_FROM_SHADER
+    std::istringstream input(settingsDefinition);
+    std::ostringstream output;
+    std::string line;
+    while (std::getline(input, line)) {
+        if (line.find("#DEFINE_REMOVE_FROM_SHADER") == std::string::npos) {
+            output << line << '\n';
+        }
+    }
+    settingsDefinition = output.str();
 
     // Replace #SIMULATIONSETTINGS in the shader source
     std::string processedSource = source;

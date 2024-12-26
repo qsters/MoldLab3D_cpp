@@ -28,7 +28,7 @@ add_executable(MoldLab3D ${SRC_FILES}
         src/InputManager.cpp
         include/InputManager.h
         include/MeshData.h
-        include/SimulationSettings.h
+        include/SimulationData.h
         src/imgui/imgui.cpp            # ImGui source files
         src/imgui/imgui_draw.cpp
         src/imgui/imgui_widgets.cpp

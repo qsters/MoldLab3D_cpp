@@ -10,7 +10,7 @@ layout(std430, binding = 0) buffer VoxelGrid {
 };
 
 layout(std430, binding = 2) buffer SettingsBuffer {
-    SimulationSettings settings;
+    SimulationData settings;
 };
 
 // Using image3D for SDF data
