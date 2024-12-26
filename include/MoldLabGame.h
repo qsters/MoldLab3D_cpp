@@ -50,13 +50,12 @@ private:
     // Dynamically allocated to reduce Stack Memory, was causing issues at large values
     Spore* spores = nullptr;
 
-    SimulationData simulationSettings;
+    SimulationData simulationSettings{};
 
     float horizontalAngle = 90.0f; // Rotation angle around the Y-axis
     float verticalAngle = 0.0f;   // Rotation angle around the X-axis
     float orbitRadius = GRID_SIZE * 1.25;    // Distance from the origin
     float rotationSpeed = 1.0f;   // Speed of rotation
-
 
     InputState inputState;
 
@@ -67,12 +66,12 @@ private:
     void initializeVoxelGridBuffer();
     void initializeSDFBuffer();
     void initializeSimulationBuffers();
-    void initializeSpores();
+    void initializeSpores() const;
 
     // Update Helpers
     void HandleCameraMovement(float orbitRadius, float deltaTime);
-    void DispatchComputeShaders();
-    void executeJFA();
+    void DispatchComputeShaders() const;
+    void executeJFA() const;
 
 };
 

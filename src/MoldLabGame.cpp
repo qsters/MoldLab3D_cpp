@@ -10,12 +10,12 @@
 // Constructor/Destructor
 // ============================
 
-MoldLabGame::MoldLabGame(int width, int height, const std::string &title)
+MoldLabGame::MoldLabGame(const int width, const int height, const std::string &title)
     : GameEngine(width, height, title, false) {
     spores = new Spore[SPORE_COUNT]();
     displayFramerate = true;
 
-    GameEngine::addShaderDefinition("#DEFINE_SIMULATION_SETTINGS", "include/SimulationData.h");
+    addShaderDefinition("#DEFINE_SIMULATION_SETTINGS", "include/SimulationData.h");
 }
 
 MoldLabGame::~MoldLabGame() {
@@ -103,9 +103,10 @@ void MoldLabGame::initializeVoxelGridBuffer() {
 }
 
 void MoldLabGame::initializeSDFBuffer() {
-    int reducedGridSize = GRID_SIZE / SDF_REDUCTION_FACTOR;
+    constexpr int reducedGridSize = GRID_SIZE / SDF_REDUCTION_FACTOR;
 
-    if (GRID_SIZE % SDF_REDUCTION_FACTOR != 0) {
+    if constexpr (GRID_SIZE % SDF_REDUCTION_FACTOR != 0) {
+        // ReSharper disable once CppDFAUnreachableCode
         std::cerr << "Warning: GRID_SIZE is not evenly divisible by SDF_REDUCTION_FACTOR!" << std::endl;
     }
 
@@ -119,7 +120,7 @@ void MoldLabGame::initializeSDFBuffer() {
 }
 
 
-void uploadSettingsBuffer(GLuint simulationSettingsBuffer, SimulationData &settings) {
+void uploadSettingsBuffer(GLuint simulationSettingsBuffer, const SimulationData &settings) {
     glGenBuffers(1, &simulationSettingsBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, simulationSettingsBuffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(SimulationData), &settings, GL_STATIC_DRAW);
@@ -129,7 +130,7 @@ void uploadSettingsBuffer(GLuint simulationSettingsBuffer, SimulationData &setti
 }
 
 void MoldLabGame::initializeSimulationBuffers() {
-    GLsizeiptr sporesSize = sizeof(Spore) * SPORE_COUNT;
+    constexpr GLsizeiptr sporesSize = sizeof(Spore) * SPORE_COUNT;
 
 
     glGenBuffers(1, &sporesBuffer);
@@ -168,11 +169,10 @@ Spore MoldLabGame::CreateRandomSpore() {
 }
 
 
-void MoldLabGame::initializeSpores() {
-    srand(static_cast<unsigned int>(time(0)));
+void MoldLabGame::initializeSpores() const {
+    srand(static_cast<unsigned int>(time(nullptr)));
 
     for (int i = 0; i < SPORE_COUNT; i++) {
-
         spores[i] = CreateRandomSpore();
     }
 }
@@ -181,13 +181,13 @@ void MoldLabGame::initializeSpores() {
 // ============================
 // Update Helpers
 // ============================
-void MoldLabGame::HandleCameraMovement(float orbitRadius, float deltaTime) {
+void MoldLabGame::HandleCameraMovement(const float orbitRadius, const float deltaTime) {
     static float angle = 0.0f; // Current angle of rotation
 
     // Update the angle
     angle += ROTATION_SPEED * deltaTime;
 
-    float gridCenter = (GRID_SIZE - 1.0f) * 0.5f; // Adjust for the centered cube positions
+    constexpr float gridCenter = (GRID_SIZE - 1.0f) * 0.5f; // Adjust for the centered cube positions
     set_vec3(simulationSettings.camera_focus, gridCenter, gridCenter, gridCenter);
 
     // Adjust horizontal angle
@@ -225,19 +225,17 @@ void MoldLabGame::HandleCameraMovement(float orbitRadius, float deltaTime) {
     set_vec3(simulationSettings.camera_position, focusPoint[0] + x, focusPoint[1] + y, focusPoint[2] + z);
 }
 
-void MoldLabGame::DispatchComputeShaders() {
+void MoldLabGame::DispatchComputeShaders() const {
     uploadSettingsBuffer(simulationSettingsBuffer, simulationSettings);
 
-
     DispatchComputeShader(decaySporesShaderProgram, GRID_SIZE, GRID_SIZE, GRID_SIZE);
-
 
     DispatchComputeShader(moveSporesShaderProgram, SPORE_COUNT, 1, 1);
     DispatchComputeShader(drawSporesShaderProgram, SPORE_COUNT, 1, 1);
     executeJFA();
 }
 
-void MoldLabGame::executeJFA() {
+void MoldLabGame::executeJFA() const {
     glUseProgram(jumpFloodInitShaderProgram);
 
     GLuint readTexture = sdfTexBuffer1;
@@ -246,7 +244,7 @@ void MoldLabGame::executeJFA() {
     glBindImageTexture(0, readTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F); // set it to write only
 
 
-    int reducedGridSize = GRID_SIZE / SDF_REDUCTION_FACTOR;
+    constexpr int reducedGridSize = GRID_SIZE / SDF_REDUCTION_FACTOR;
     DispatchComputeShader(jumpFloodInitShaderProgram, reducedGridSize, reducedGridSize, reducedGridSize);
     // inits the read, for later use
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -326,7 +324,7 @@ void MoldLabGame::update(float deltaTime) {
 
     simulationSettings.delta_time = deltaTime;
 
-    float orbitDistanceChange = 40.0;
+    constexpr float orbitDistanceChange = 40.0;
 
     if (inputState.isDPressed) {
         orbitRadius += orbitDistanceChange * deltaTime;
