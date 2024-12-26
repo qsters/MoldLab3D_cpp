@@ -118,7 +118,7 @@ void GameEngine::SetvSyncStatus(bool status) {
     glfwSwapInterval(int(vSyncEnabled));
 }
 
-bool GameEngine::GetvSyncStatus() {
+bool GameEngine::GetvSyncStatus() const {
     return vSyncEnabled;
 }
 
