@@ -162,7 +162,7 @@ Spore MoldLabGame::CreateRandomSpore() {
     spore.direction[0] = dirX / magnitude;
     spore.direction[1] = dirY / magnitude;
     spore.direction[2] = dirZ / magnitude;
-    
+
     return spore;
 }
 
@@ -233,7 +233,10 @@ void MoldLabGame::DispatchComputeShaders() {
 
     DispatchComputeShader(moveSporesShaderProgram, SPORE_COUNT, 1, 1);
     DispatchComputeShader(drawSporesShaderProgram, SPORE_COUNT, 1, 1);
+    executeJFA();
+}
 
+void MoldLabGame::executeJFA() {
     glUseProgram(jumpFloodInitShaderProgram);
 
     GLuint readTexture = sdfTexBuffer1;
@@ -277,6 +280,7 @@ void MoldLabGame::DispatchComputeShaders() {
     glBindImageTexture(0, readTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
     // set to read after last swap for rendering
 }
+
 
 
 // ============================

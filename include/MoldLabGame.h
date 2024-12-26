@@ -72,6 +72,7 @@ private:
     // Update Helpers
     void HandleCameraMovement(float orbitRadius, float deltaTime);
     void DispatchComputeShaders();
+    void executeJFA();
 
 };
 
