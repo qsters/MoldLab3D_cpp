@@ -140,41 +140,6 @@ float map_the_world_transparent(in vec3 point) {
     result = sdfValue.w;
     result = max(result, -cameraSDF);
     return result;
-
-    // skip this if the closest cube is less than the max betwen the search radius and the reduction factor times by the diagonal of the cube to make sure it will account for diagonal movement.
-    if (sdfValue.w > max(sdfReductionFactor, searchRadius) * 1.8) {
-        // subtract a bit off to make sure we do not overshoot
-        result = sdfValue.w - sdfReductionFactor / 2.0;
-        result = min(result, settings.grid_size / 2.0); // make sure it jumps no more than half the grid at one point to account for sdf values not set
-        result = max(result, -cameraSDF);
-        return result;
-    }
-
-    // Iterate only within a cube around the ray's current position
-    for (int x = max(center.x - searchRadius, 0); x <= min(center.x + searchRadius, settings.grid_size - 1); x++) {
-        for (int y = max(center.y - searchRadius, 0); y <= min(center.y + searchRadius, settings.grid_size - 1); y++) {
-            for (int z = max(center.z - searchRadius, 0); z <= min(center.z + searchRadius, settings.grid_size - 1); z++) {
-                int idx = x + settings.grid_size * (y + settings.grid_size * z); // Index for flattened 3D array
-
-                // Skip zero-sized cubes
-                if (voxelData[idx] <= 0.01) continue;
-
-                // Calculate the grid position
-                vec3 gridPoint = vec3(float(x), float(y), float(z));
-
-                // Calculate the distance to the cube at this grid point
-                float cube = distance_from_cube(point, gridPoint, voxelData[idx]);
-
-                // Combine distances using smooth_min for blending
-                result = smooth_min(result, cube, 0.55);
-            }
-        }
-    }
-
-    // Moves search radius if nothing has been encountered.
-    result = min(searchRadius, result);
-    result = max(result, -cameraSDF);
-    return result; // Return the minimum distance for the scene
 }
 
 // Calculate the normal at a point on the surface
@@ -213,7 +178,7 @@ vec3 calculage_lighting(in vec3 rayOrigin, in vec3 current_position) {
 vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
     float total_distance_traveled = 0.0;
     const int NUMBER_OF_STEPS = 500;
-    const float MINIMUM_HIT_DISTANCE = 0.01;
+    const float MINIMUM_HIT_DISTANCE = 0.1;
     // Diagonal of a cube side length * sqrt(3)
     const float MAXIMUM_TRACE_DISTANCE = settings.grid_size * 1.732;
 
@@ -245,8 +210,8 @@ vec3 ray_march_transparency(in vec3 rayOrigin, in vec3 rayDirection) {
     // Diagonal of a cube side length * sqrt(3)
     const float MAXIMUM_TRACE_DISTANCE = settings.grid_size * 1.732;
 
-    float opacity_accumulator = 0.0;
-    float opacity_amount_per_step = (2 / float(settings.grid_size)) * STEP_MARCH_DISTANCE;
+    vec3 opacity_accumulator = vec3(0.0); // Initialize as a vec3 to accumulate color
+    float opacity_scaler = 15.0 / float(settings.grid_size);
 
     for (int i = 0; i < NUMBER_OF_STEPS; ++i) {
         vec3 current_position = rayOrigin + total_distance_traveled * rayDirection;
@@ -258,25 +223,29 @@ vec3 ray_march_transparency(in vec3 rayOrigin, in vec3 rayDirection) {
             return vec3(i / float(NUMBER_OF_STEPS), 0.0, 0.0);
         }
 
-        // If exited the bounds, or opacity is full, return opacity
-        if (distance_from_cube(current_position, settings.camera_focus, settings.grid_size) > 1 || opacity_accumulator >= 1.0f) {
-            return vec3(opacity_accumulator);
+        // If exited the bounds, or opacity is full, return accumulated color
+        if (distance_from_cube(current_position, settings.camera_focus, settings.grid_size) > 1 ||
+        max(opacity_accumulator.x, max(opacity_accumulator.y, opacity_accumulator.z)) >= 1.0f) {
+            return opacity_accumulator; // Return the accumulated color
         }
 
         float distance_to_closest = map_the_world_transparent(current_position);
         traveled_this_step = distance_to_closest;
-        //        return vec3(distance_to_closest);
 
         if (distance_to_closest < MINIMUM_HIT_DISTANCE) {
             ivec3 gridCoord = clamp(ivec3(floor(current_position)), ivec3(0), ivec3(settings.grid_size - 1)); // Convert to grid coordinates
             int voxelIndex = gridCoord.x + settings.grid_size * (gridCoord.y + settings.grid_size * gridCoord.z);
 
-            opacity_accumulator += (10 * voxelData[voxelIndex]) / settings.grid_size;
+            // Calculate opacity and add white (vec3(1.0)) scaled by the voxel value
+            float opacity_amount = voxelData[voxelIndex] * opacity_scaler;
+            opacity_accumulator += (current_position / float(settings.grid_size)) * opacity_amount;
+
             traveled_this_step = STEP_MARCH_DISTANCE;
         }
 
         total_distance_traveled += traveled_this_step;
     }
+
     return vec3(0.0, 0.0, 1.0); // Background color (black)
 }
 
