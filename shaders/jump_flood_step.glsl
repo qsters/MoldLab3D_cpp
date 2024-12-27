@@ -3,7 +3,7 @@
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 
 // Simulation Settings
-#DEFINE_SIMULATION_SETTINGS
+#define SIMULATION_SETTINGS
 
 layout(std430, binding = 0) buffer VoxelGrid {
     float voxelData[]; // 1D array representing the voxel grid

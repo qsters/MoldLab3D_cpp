@@ -15,6 +15,8 @@ void main() {
 #type fragment
 #version 430 core
 
+#define USE_TRANSPARENCY
+
 in vec2 uv;
 
 uniform float testValue;
@@ -26,7 +28,7 @@ vec3 objectColor = vec3(0.0, 1.0, 0.2);   // Reddish object
 
 float maxCubeSideLength = 1.0;
 
-#DEFINE_SIMULATION_SETTINGS
+#define SIMULATION_SETTINGS
 
 // Define the voxel grid as a shader storage buffer
 layout(std430, binding = 0) buffer VoxelGrid {
@@ -314,7 +316,13 @@ void main() {
     rayOrigin += rayDirection * max(tNear - 0.001, 0.0); // Ensure tNear is non-negative
 
     // Perform ray marching from the AABB intersection point
+    // Perform ray marching from the AABB intersection point
+    #ifdef USE_TRANSPARENCY
+    fragmentColor = vec4(ray_march_transparency(rayOrigin, rayDirection), 1.0);
+    #else
     fragmentColor = vec4(ray_march(rayOrigin, rayDirection), 1.0);
+    #endif
+
 }
 
 //void main() {

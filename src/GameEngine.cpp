@@ -7,9 +7,6 @@
 #include <sstream>
 #include <utility>
 
-const std::string SimulationSettingsFile = "include/SimulationData.h";
-const std::string SimulationSettingsDefinition = "#DEFINE_SIMULATION_SETTINGS";
-
 GameEngine::GameEngine(const int width, const int height, std::string  title, const bool vSync)
     : window(nullptr), width(width), height(height), title(std::move(title)), lastFrameTime(0.0f), deltaTime(0.0f), timeSinceStart(0.0f), vSyncEnabled(vSync) {
 
