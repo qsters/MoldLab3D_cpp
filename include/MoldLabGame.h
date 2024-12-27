@@ -6,14 +6,14 @@
 #include "SimulationData.h"
 #include "Spore.h"
 
-constexpr int GRID_SIZE = 300;
-constexpr int SPORE_COUNT = 1'000'000;
+constexpr int GRID_SIZE = 500;
+constexpr int SPORE_COUNT = 1000000;
 constexpr float SPORE_SPEED = 10;
 constexpr float SPORE_DECAY = 0.33;
 constexpr float SPORE_SENSOR_DISTANCE = 10.0;
 constexpr float SPORE_TURN_SPEED = 5.0;
 
-constexpr int SDF_REDUCTION_FACTOR = 3;
+constexpr int SDF_REDUCTION_FACTOR = 2;
 
 constexpr float ROTATION_SPEED =  100.0f;
 
