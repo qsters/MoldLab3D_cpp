@@ -156,6 +156,49 @@ std::pair<std::string, std::string> GameEngine::LoadCombinedShaderSource(const s
     return { vertex_shader_stream.str(), fragment_shader_stream.str() };
 }
 
+std::string ReplaceDefinitionWithText(const std::string& definition, const std::string& replacementText, const std::string& source) {
+    // Preprocess the replacement text to exclude specific lines
+    std::string processedText;
+    std::string line;
+    std::istringstream input(replacementText);
+    std::ostringstream output;
+
+    while (std::getline(input, line)) {
+        if (line.find("#DEFINE_REMOVE_FROM_SHADER") == std::string::npos) {
+            output << line << '\n';
+        }
+    }
+    processedText = output.str();
+
+    // Copy the original source
+    std::string processedSource = source;
+
+    // Replace the definition in the source
+    size_t position = processedSource.find(definition);
+    if (position != std::string::npos) {
+        processedSource.replace(position, definition.length(), processedText);
+    }
+
+    return processedSource;
+}
+
+
+std::string ReplaceDefinitionWithFile(const std::string& definition, const std::string& filePath, const std::string& source) {
+    // Read the file contents
+    std::ifstream file(filePath);
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open shader definition file: " << filePath << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    std::string fileContents = buffer.str();
+
+    // Delegate to ReplaceDefinitionWithText
+    return ReplaceDefinitionWithText(definition, fileContents, source);
+}
+
 
 
 GLuint GameEngine::CompileShader(const std::string& source, GLenum shader_type) {
@@ -166,29 +209,10 @@ GLuint GameEngine::CompileShader(const std::string& source, GLenum shader_type) 
 
     // Replace each placeholder with its corresponding definition
     for (const auto& [placeholder, filePath] : shaderDefinitions) {
-        std::ifstream file(filePath);
-        if (!file.is_open()) {
-            std::cerr << "Error: Could not open shader definition file: " << filePath << std::endl;
-            exit(EXIT_FAILURE);
-        }
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-
-        // Preprocess the definition to exclude lines with #DEFINE_REMOVE_FROM_SHADER
-        std::string definition;
-        std::string line;
-        std::istringstream input(buffer.str());
-        std::ostringstream output;
-        while (std::getline(input, line)) {
-            if (line.find("#DEFINE_REMOVE_FROM_SHADER") == std::string::npos) {
-                output << line << '\n';
-            }
-        }
-        definition = output.str();
-        // Replace placeholder in the shader source
-        size_t position = processedSource.find(placeholder);
-        if (position != std::string::npos) {
-            processedSource.replace(position, placeholder.length(), definition);
+        if (filePath == "") {
+            processedSource = ReplaceDefinitionWithText(placeholder, "", processedSource);
+        } else {
+            processedSource = ReplaceDefinitionWithFile(placeholder, filePath, processedSource);
         }
     }
 
@@ -216,6 +240,15 @@ void GameEngine::addShaderDefinition(const std::string &placeholder, const std::
     shaderDefinitions[placeholder] = filePath;
 }
 
+void GameEngine::removeShaderDefinition(const std::string &placeholder) {
+    // Check if the placeholder exists in the map
+    auto item = shaderDefinitions.find(placeholder);
+    if (item != shaderDefinitions.end()) {
+        shaderDefinitions.erase(item); // Remove the placeholder and its associated file path
+    } else {
+        std::cerr << "Warning: Attempt to remove non-existent shader definition: " << placeholder << std::endl;
+    }
+}
 
 GLuint GameEngine::CompileAndAttachShader(const std::string& source, const GLenum shaderType, const GLuint program) {
     const GLuint shader = CompileShader(source, shaderType);

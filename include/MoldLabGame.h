@@ -57,9 +57,12 @@ private:
     float orbitRadius = GRID_SIZE * 1.25;    // Distance from the origin
     float rotationSpeed = 1.0f;   // Speed of rotation
 
+    bool useTransparency = false;
+
     InputState inputState;
 
     // Initialization Functions
+    void initializeRenderShader(bool useTransparency);
     void initializeShaders();
     void initializeUniformVariables();
     void initializeVertexBuffers();

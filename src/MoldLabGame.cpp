@@ -5,6 +5,7 @@
 #include "MeshData.h"
 #include "imgui.h"
 
+const std::string USE_TRANSPARENCY_DEFINITION = "#define USE_TRANSPARENCY";
 
 // ============================
 // Constructor/Destructor
@@ -16,6 +17,9 @@ MoldLabGame::MoldLabGame(const int width, const int height, const std::string &t
     displayFramerate = true;
 
     addShaderDefinition("#define SIMULATION_SETTINGS", "include/SimulationData.h");
+    if (useTransparency) {
+        addShaderDefinition(USE_TRANSPARENCY_DEFINITION, "");
+    }
 }
 
 MoldLabGame::~MoldLabGame() {
@@ -38,10 +42,21 @@ MoldLabGame::~MoldLabGame() {
 // ============================
 // Initialization Helpers
 // ============================
-void MoldLabGame::initializeShaders() {
+void MoldLabGame::initializeRenderShader(bool useTransparency) {
+    if (!useTransparency) {
+        addShaderDefinition(USE_TRANSPARENCY_DEFINITION, "");
+    } else {
+        removeShaderDefinition(USE_TRANSPARENCY_DEFINITION);
+    }
+
     shaderProgram = CreateShaderProgram({
         {"shaders/renderer.glsl", GL_VERTEX_SHADER, true} // Combined vertex and fragment shaders
     });
+}
+
+
+void MoldLabGame::initializeShaders() {
+    initializeRenderShader(useTransparency);
 
     // Initialize the compute shaders
     drawSporesShaderProgram = CreateShaderProgram({
@@ -354,5 +369,11 @@ void MoldLabGame::renderUI() {
     ImGui::SliderFloat("Turn Speed", &simulationSettings.turn_speed, 0.0f, 10.0f);
     ImGui::SliderFloat("Decay Speed", &simulationSettings.decay_speed, 0.0f, 10.0f);
     ImGui::SliderFloat("Sensor Distance", &simulationSettings.sensor_distance, 0.0f, GRID_SIZE / 4.0);
+    bool previousState = useTransparency; // Track the previous state
+    if (ImGui::Checkbox("Use Transparency", &useTransparency)) {
+        if (useTransparency != previousState) {
+            initializeRenderShader(useTransparency);
+        }
+    }
     ImGui::End(); // End the window
 }

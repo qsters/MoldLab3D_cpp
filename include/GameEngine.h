@@ -35,6 +35,7 @@ public:
     static void CheckGLError(const std::string& context);
 
     void addShaderDefinition(const std::string& placeholder, const std::string& filePath);
+    void removeShaderDefinition(const std::string &placeholder);
 
     bool GetVsyncStatus() const;
     void SetVsyncStatus(bool status);
