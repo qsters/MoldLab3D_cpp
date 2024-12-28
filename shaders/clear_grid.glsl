@@ -24,5 +24,5 @@ void main() {
         return;
     }
 
-    imageStore(voxelData, ivec3(x, y, z), vec4(0.5));
+    imageStore(voxelData, ivec3(x, y, z), vec4(0.0));
 }
