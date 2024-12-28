@@ -78,6 +78,10 @@ void MoldLabGame::initializeShaders() {
     jumpFloodStepShaderProgram = CreateShaderProgram({
         {"shaders/jump_flood_step.glsl", GL_COMPUTE_SHADER, false}
     });
+
+    clearGridShaderProgram = CreateShaderProgram({
+    {"shaders/clear_grid.glsl", GL_COMPUTE_SHADER, false}
+    });
 }
 
 
@@ -332,6 +336,8 @@ void MoldLabGame::start() {
     inputManager.bindKeyState(GLFW_KEY_RIGHT, &inputState.isRightPressed);
     inputManager.bindKeyState(GLFW_KEY_UP, &inputState.isUpPressed);
     inputManager.bindKeyState(GLFW_KEY_DOWN, &inputState.isDownPressed);
+
+    DispatchComputeShader(clearGridShaderProgram, GRID_SIZE, GRID_SIZE, GRID_SIZE);
 }
 
 void MoldLabGame::update(float deltaTime) {
