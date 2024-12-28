@@ -6,6 +6,9 @@
 #include "imgui.h"
 
 const std::string USE_TRANSPARENCY_DEFINITION = "#define USE_TRANSPARENCY";
+const std::string SIMULATION_SETTINGS_DEFINITION = "#define SIMULATION_SETTINGS";
+const std::string SPORE_DEFINITION = "#define SPORE_STRUCT";
+
 
 constexpr int GRID_TEXTURE_LOCATION = 0;
 constexpr int SDF_TEXTURE_READ_LOCATION = 1;
@@ -23,10 +26,11 @@ MoldLabGame::MoldLabGame(const int width, const int height, const std::string &t
     spores = new Spore[SPORE_COUNT]();
     displayFramerate = true;
 
-    addShaderDefinition("#define SIMULATION_SETTINGS", "include/SimulationData.h");
+    addShaderDefinition(SIMULATION_SETTINGS_DEFINITION, "include/SimulationData.h");
     if (useTransparency) {
         addShaderDefinition(USE_TRANSPARENCY_DEFINITION, "");
     }
+    addShaderDefinition(SPORE_DEFINITION, "include/Spore.h");
 }
 
 MoldLabGame::~MoldLabGame() {

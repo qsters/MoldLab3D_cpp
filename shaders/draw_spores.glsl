@@ -1,10 +1,6 @@
 #version 430
 
-// Spores Data Structure
-struct Spore {
-    vec3 position;
-    vec3 direction;
-};
+#define SPORE_STRUCT
 
 // Simulation Settings
 #define SIMULATION_SETTINGS
