@@ -7,6 +7,13 @@
 
 const std::string USE_TRANSPARENCY_DEFINITION = "#define USE_TRANSPARENCY";
 
+constexpr int GRID_TEXTURE_LOCATION = 0;
+constexpr int SDF_TEXTURE_READ_LOCATION = 1;
+constexpr int SDF_TEXTURE_WRITE_LOCATION = 2;
+
+constexpr int SPORE_BUFFER_LOCATION = 0;
+constexpr int SIMULATION_BUFFER_LOCATION = 1;
+
 // ============================
 // Constructor/Destructor
 // ============================
@@ -27,13 +34,16 @@ MoldLabGame::~MoldLabGame() {
         glDeleteBuffers(1, &triangleVbo);
     if (triangleVao)
         glDeleteVertexArrays(1, &triangleVao);
-    if (voxelGridBuffer)
-        glDeleteBuffers(1, &voxelGridBuffer);
     if (sporesBuffer)
         glDeleteBuffers(1, &sporesBuffer);
     if (simulationSettingsBuffer)
         glDeleteBuffers(1, &simulationSettingsBuffer);
-
+    if (voxelGridTexture)
+        glDeleteTextures(1, &voxelGridTexture);
+    if (sdfTexBuffer1)
+        glDeleteTextures(1, &sdfTexBuffer1);
+    if (sdfTexBuffer2)
+        glDeleteTextures(1, &sdfTexBuffer2);
     delete[] spores;
 
     std::cout << "Exiting..." << std::endl;
@@ -111,15 +121,29 @@ void MoldLabGame::initializeVertexBuffers() {
 }
 
 void MoldLabGame::initializeVoxelGridBuffer() {
-    constexpr GLsizeiptr voxelGridSize = sizeof(float) * GRID_SIZE * GRID_SIZE * GRID_SIZE;
+    constexpr int voxelGridSize = GRID_SIZE;
 
-    // ** Create Voxel Grid Buffer **
-    glGenBuffers(1, &voxelGridBuffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, voxelGridBuffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, voxelGridSize, nullptr, GL_STATIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, voxelGridBuffer); // Binding index 0
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind buffer
+    // ** Create Voxel Grid Texture **
+    glGenTextures(1, &voxelGridTexture);
+    glBindTexture(GL_TEXTURE_3D, voxelGridTexture);
+
+    // Allocate storage for the 3D texture
+    glTexStorage3D(GL_TEXTURE_3D, 1, GL_R32F, voxelGridSize, voxelGridSize, voxelGridSize);
+
+    // Set texture parameters
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    // Bind the texture as an image unit for compute shader access
+    glBindImageTexture(GRID_TEXTURE_LOCATION, voxelGridTexture, 0, GL_TRUE, 0, GL_READ_WRITE, GL_R32F);
+
+    // Unbind the texture
+    glBindTexture(GL_TEXTURE_3D, 0);
 }
+
 
 void MoldLabGame::initializeSDFBuffer() {
     constexpr int reducedGridSize = GRID_SIZE / SDF_REDUCTION_FACTOR;
@@ -133,9 +157,28 @@ void MoldLabGame::initializeSDFBuffer() {
     glBindTexture(GL_TEXTURE_3D, sdfTexBuffer1);
     glTexStorage3D(GL_TEXTURE_3D, 1, GL_RGBA32F, reducedGridSize, reducedGridSize, reducedGridSize);
 
+    // Set texture parameters
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    glBindTexture(GL_TEXTURE_3D, 0);
+
     glGenTextures(1, &sdfTexBuffer2);
     glBindTexture(GL_TEXTURE_3D, sdfTexBuffer2);
     glTexStorage3D(GL_TEXTURE_3D, 1, GL_RGBA32F, reducedGridSize, reducedGridSize, reducedGridSize);
+
+    // Set texture parameters
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    glBindTexture(GL_TEXTURE_3D, 0);
+
 }
 
 
@@ -143,7 +186,7 @@ void uploadSettingsBuffer(GLuint simulationSettingsBuffer, const SimulationData 
     glGenBuffers(1, &simulationSettingsBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, simulationSettingsBuffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(SimulationData), &settings, GL_STATIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, simulationSettingsBuffer); // Binding index 2 for settings
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, SIMULATION_BUFFER_LOCATION, simulationSettingsBuffer); // Binding index 2 for settings
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
 }
@@ -155,7 +198,7 @@ void MoldLabGame::initializeSimulationBuffers() {
     glGenBuffers(1, &sporesBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, sporesBuffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sporesSize, spores, GL_DYNAMIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, sporesBuffer); // Binding index 1 for spores
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, SPORE_BUFFER_LOCATION, sporesBuffer); // Binding index 1 for spores
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
 
     // **Settings Buffer**
@@ -260,7 +303,7 @@ void MoldLabGame::executeJFA() const {
     GLuint readTexture = sdfTexBuffer1;
     GLuint writeTexture = sdfTexBuffer2; // will be used later
 
-    glBindImageTexture(0, readTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F); // set it to write only
+    glBindImageTexture(SDF_TEXTURE_READ_LOCATION, readTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F); // set it to write ONLY for initialization
 
 
     constexpr int reducedGridSize = GRID_SIZE / SDF_REDUCTION_FACTOR;
@@ -277,8 +320,8 @@ void MoldLabGame::executeJFA() const {
 
     while (stepSize >= 1) {
         iterations++;
-        glBindImageTexture(0, readTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
-        glBindImageTexture(1, writeTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(SDF_TEXTURE_READ_LOCATION, readTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
+        glBindImageTexture(SDF_TEXTURE_WRITE_LOCATION, writeTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
 
         *jfaStepSV.value = stepSize;
@@ -295,7 +338,7 @@ void MoldLabGame::executeJFA() const {
         }
     }
 
-    glBindImageTexture(0, readTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
+    glBindImageTexture(SDF_TEXTURE_READ_LOCATION, readTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
     // set to read after last swap for rendering
 }
 

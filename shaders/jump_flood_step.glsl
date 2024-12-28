@@ -5,16 +5,13 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 // Simulation Settings
 #define SIMULATION_SETTINGS
 
-layout(std430, binding = 0) buffer VoxelGrid {
-    float voxelData[]; // 1D array representing the voxel grid
-};
 
-layout(std430, binding = 2) buffer SettingsBuffer {
+layout(std430, binding = 1) buffer SettingsBuffer {
     SimulationData settings;
 };
 
-layout(rgba32f, binding = 0) uniform readonly image3D readSDFData; // just updated to using textures instead of an array buffer
-layout(rgba32f, binding = 1) uniform writeonly image3D writeSDFData;
+layout(rgba32f, binding = 1) uniform readonly image3D readSDFData; // just updated to using textures instead of an array buffer
+layout(rgba32f, binding = 2) uniform writeonly image3D writeSDFData;
 
 
 

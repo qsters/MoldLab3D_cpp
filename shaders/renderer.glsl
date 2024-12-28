@@ -30,17 +30,14 @@ float maxCubeSideLength = 1.0;
 
 #define SIMULATION_SETTINGS
 
-// Define the voxel grid as a shader storage buffer
-layout(std430, binding = 0) buffer VoxelGrid {
-    float voxelData[]; // Flattened 3D grid as a 1D array
-};
-
-layout(std430, binding = 2) buffer SettingsBuffer {
+layout(std430, binding = 1) buffer SettingsBuffer {
     SimulationData settings;
 };
 
+layout(binding = 0, r32f) uniform image3D voxelData;
+
 // After dispatching, buffer 4 is the data to read from for rendering
-layout(rgba32f, binding = 0) uniform readonly image3D sdfData;
+layout(rgba32f, binding = 1) uniform readonly image3D sdfData;
 
 
 // Calculate the distance from a point to a cube centered at `c` with size `s`
@@ -100,16 +97,16 @@ float map_the_world(in vec3 point) {
     for (int x = max(center.x - searchRadius, 0); x <= min(center.x + searchRadius, settings.grid_size - 1); x++) {
         for (int y = max(center.y - searchRadius, 0); y <= min(center.y + searchRadius, settings.grid_size - 1); y++) {
             for (int z = max(center.z - searchRadius, 0); z <= min(center.z + searchRadius, settings.grid_size - 1); z++) {
-                int idx = x + settings.grid_size * (y + settings.grid_size * z); // Index for flattened 3D array
+                float voxelValue =  imageLoad(voxelData, ivec3(x,y,z)).x;
 
                 // Skip zero-sized cubes
-                if (voxelData[idx] <= 0.01) continue;
+                if (voxelValue <= 0.01) continue;
 
                 // Calculate the grid position
                 vec3 gridPoint = vec3(float(x), float(y), float(z));
 
                 // Calculate the distance to the cube at this grid point
-                float cube = distance_from_cube(point, gridPoint, voxelData[idx]);
+                float cube = distance_from_cube(point, gridPoint, voxelValue);
 
                 // Combine distances using smooth_min for blending
                 result = smooth_min(result, cube, 0.55);
@@ -237,7 +234,7 @@ vec3 ray_march_transparency(in vec3 rayOrigin, in vec3 rayDirection) {
             int voxelIndex = gridCoord.x + settings.grid_size * (gridCoord.y + settings.grid_size * gridCoord.z);
 
             // Calculate opacity and add white (vec3(1.0)) scaled by the voxel value
-            float opacity_amount = voxelData[voxelIndex] * opacity_scaler;
+            float opacity_amount = imageLoad(voxelData, gridCoord).x * opacity_scaler;
             opacity_accumulator += (current_position / float(settings.grid_size)) * opacity_amount;
 
             traveled_this_step = STEP_MARCH_DISTANCE;
@@ -291,5 +288,4 @@ void main() {
     #else
     fragmentColor = vec4(ray_march(rayOrigin, rayDirection), 1.0);
     #endif
-
 }

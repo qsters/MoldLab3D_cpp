@@ -11,20 +11,16 @@ struct Spore {
 
 layout(local_size_x = 8, local_size_y = 1, local_size_z = 1) in;
 
-layout(std430, binding = 0) buffer VoxelGrid {
-    float voxelData[]; // 1D array representing the voxel grid
-};
+layout(binding = 0, r32f) uniform image3D voxelData;
 
 // Buffers
-layout(std430, binding = 1) buffer SporesBuffer {
+layout(std430, binding = 0) buffer SporesBuffer {
     Spore spores[];
 };
 
-layout(std430, binding = 2) buffer SettingsBuffer {
+layout(std430, binding = 1) buffer SettingsBuffer {
     SimulationData settings;
 };
-
-
 
 
 void main() {
@@ -47,9 +43,6 @@ void main() {
     clamp(int(floor(sporePosition.z)), 0, gridSize - 1)
     );
 
-    // Convert the voxel coordinates to a 1D index
-    int voxelIndex = voxelCoord.x + gridSize * (voxelCoord.y + gridSize * voxelCoord.z);
 
-
-    voxelData[voxelIndex] = 1.0; // Mark the voxel as occupied by the spore
+    imageStore(voxelData, voxelCoord, vec4(1.0)); // Mark the voxel as occupied by the spore
 }

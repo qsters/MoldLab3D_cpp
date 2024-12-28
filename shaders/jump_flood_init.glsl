@@ -5,16 +5,15 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 // Simulation Settings
 #define SIMULATION_SETTINGS
 
-layout(std430, binding = 0) buffer VoxelGrid {
-    float voxelData[]; // 1D array representing the high-resolution voxel grid
-};
 
-layout(std430, binding = 2) buffer SettingsBuffer {
+layout(std430, binding = 1) buffer SettingsBuffer {
     SimulationData settings;
 };
 
+layout(binding = 0, r32f) uniform image3D voxelData;
+
 // Using image3D for SDF data
-layout(rgba32f, binding = 0) uniform writeonly image3D sdfData;
+layout(rgba32f, binding = 1) uniform writeonly image3D sdfData;
 
 
 void main() {
@@ -47,7 +46,7 @@ void main() {
                 int highIndex = x + settings.grid_size * (y + settings.grid_size * z);
 
                 // Check if the voxel is filled
-                if (voxelData[highIndex] > 0.0) {
+                if (imageLoad(voxelData, ivec3(x,y,z)).x > 0.0) {
 
                     // Mark the reduced grid cell as having a value
                     sdfEntry = vec4(reducedGridPos * sdfReductionFactor, 0.0);

@@ -11,18 +11,17 @@ struct Spore {
 
 layout(local_size_x = 8, local_size_y = 1, local_size_z = 1) in;
 
-layout(std430, binding = 0) buffer VoxelGrid {
-    float voxelData[]; // 1D array representing the voxel grid
-};
-
 // Buffers
-layout(std430, binding = 1) buffer SporesBuffer {
+layout(std430, binding = 0) buffer SporesBuffer {
     Spore spores[];
 };
 
-layout(std430, binding = 2) buffer SettingsBuffer {
+layout(std430, binding = 1) buffer SettingsBuffer {
     SimulationData settings;
 };
+
+layout(binding = 0, r32f) uniform image3D voxelData;
+
 
 
 float sense(vec3 position, vec3 direction, int gridSize, float sensorDistance) {
@@ -32,14 +31,8 @@ float sense(vec3 position, vec3 direction, int gridSize, float sensorDistance) {
     // Clamp the sampling position to the grid boundaries
     ivec3 clampedPosition = ivec3(clamp(samplePosition, vec3(0.0), vec3(gridSize - 1)));
 
-    // Compute the linear index
-    int idx = clampedPosition.z * gridSize * gridSize + clampedPosition.y * gridSize + clampedPosition.x;
-
-    // Test line for debugging sensor position
-//    voxelData[idx] = 0.5;
-
     // Return the voxel data at the sampled position
-    return voxelData[idx];
+    return imageLoad(voxelData, clampedPosition).x;
 }
 
 void main() {

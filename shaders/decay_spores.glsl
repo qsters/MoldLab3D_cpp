@@ -6,11 +6,9 @@
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 
-layout(std430, binding = 0) buffer VoxelGrid {
-    float voxelData[]; // 1D array representing the voxel grid
-};
+layout(binding = 0, r32f) uniform image3D voxelData;
 
-layout(std430, binding = 2) buffer SettingsBuffer {
+layout(std430, binding = 1) buffer SettingsBuffer {
     SimulationData settings;
 };
 
@@ -26,9 +24,7 @@ void main() {
         return;
     }
 
-    // Calculate the linear index of the voxel
-    uint idx = z * settings.grid_size * settings.grid_size + y * settings.grid_size + x;
-
-    // Apply decay to the voxel value
-    voxelData[idx] = max(0.0, voxelData[idx] - settings.decay_speed * settings.delta_time);
+    ivec3 location = ivec3(x,y,z);
+    float voxelValue = max(0.0, imageLoad(voxelData, location).x - settings.decay_speed * settings.delta_time);
+    imageStore(voxelData, location, vec4(voxelValue));
 }
