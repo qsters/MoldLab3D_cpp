@@ -293,36 +293,3 @@ void main() {
     #endif
 
 }
-
-//void main() {
-//    // Compute the reduced grid size
-//    int reducedGridSize = settings.grid_size / sdfReductionFactor;
-//
-//    // Map screen-space UV to grid coordinates
-//    ivec2 gridPos = ivec2(uv * reducedGridSize);
-//
-//    // Ensure the coordinates are within bounds
-//    if (gridPos.x < 0 || gridPos.y < 0 || gridPos.x >= reducedGridSize || gridPos.y >= reducedGridSize) {
-//        fragmentColor = vec4(0.0, 0.0, 0.0, 1.0); // Out of bounds, render black
-//        return;
-//    }
-//
-//    // Compute the 1D index for the slice at `sliceIndex`
-//    int index = gridPos.x + reducedGridSize * (gridPos.y + reducedGridSize * 200);
-//
-//    // Read the SDF value
-//    vec4 sdfEntry = sdfData[index];
-//
-//    // Map the distance value to a color
-//    float distance = sdfEntry.w;
-//    vec3 color;
-//    if (distance < 1e6) {
-//        // Normalize distance and map to color gradient
-//        float normalizedDistance = clamp(distance / float(settings.grid_size), 0.0, 1.0);
-//        color = vec3(1.0 - normalizedDistance, normalizedDistance, 0.0); // Gradient from red to green
-//    } else {
-//        color = vec3(0.0, 0.0, 0.0); // Empty cells are black
-//    }
-//
-//    fragmentColor = vec4(color, 1.0);
-//}
