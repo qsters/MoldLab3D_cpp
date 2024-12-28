@@ -50,8 +50,6 @@ void main() {
     // Convert the voxel coordinates to a 1D index
     int voxelIndex = voxelCoord.x + gridSize * (voxelCoord.y + gridSize * voxelCoord.z);
 
-    // Ensure the index is valid and update the voxel grid
-    if (voxelIndex >= 0 && voxelIndex < gridSize * gridSize * gridSize) {
-        voxelData[voxelIndex] = 1.0; // Mark the voxel as occupied by the spore
-    }
+
+    voxelData[voxelIndex] = 1.0; // Mark the voxel as occupied by the spore
 }
