@@ -4,6 +4,7 @@
 #include <string.h>
 #include <math.h>
 #include <string.h>
+#include <stdio.h>
 
 #ifdef LINMATH_NO_INLINE
 #define LINMATH_H_FUNC static
@@ -615,4 +616,173 @@ LINMATH_H_FUNC void mat4x4_arcball(mat4x4 R, mat4x4 const M, vec2 const _a, vec2
 	float const angle = acos(vec3_mul_inner(a_, b_)) * s;
 	mat4x4_rotate(R, M, c_[0], c_[1], c_[2], angle);
 }
+
+// Print function for mat3
+LINMATH_H_FUNC void print_mat4x4(mat4x4 const M) {
+	for (int i = 0; i < 4; ++i) {
+		printf("| ");
+		for (int j = 0; j < 4; ++j) {
+			printf("%f ", M[i][j]);
+		}
+		printf("|\n");
+	}
+}
+
+// Definition of mat3 NOTE THIS LAYOUT IS FOR THE GPU SIDE
+typedef vec4 mat3[3];
+
+// mat3 Identity
+LINMATH_H_FUNC void mat3_identity(mat3 M) {
+    int i, j;
+    for(i = 0; i < 3; ++i)
+        for(j = 0; j < 3; ++j)
+            M[i][j] = (i == j) ? 1.f : 0.f;
+}
+
+// mat3 Duplication
+LINMATH_H_FUNC void mat3_dup(mat3 M, mat3 const N) {
+    int i, j;
+    for(i = 0; i < 3; ++i)
+        for(j = 0; j < 3; ++j)
+            M[i][j] = N[i][j];
+}
+
+// mat3 Addition
+LINMATH_H_FUNC void mat3_add(mat3 M, mat3 const A, mat3 const B) {
+    int i, j;
+    for(i = 0; i < 3; ++i)
+        for(j = 0; j < 3; ++j)
+            M[i][j] = A[i][j] + B[i][j];
+}
+
+// mat3 Subtraction
+LINMATH_H_FUNC void mat3_sub(mat3 M, mat3 const A, mat3 const B) {
+    int i, j;
+    for(i = 0; i < 3; ++i)
+        for(j = 0; j < 3; ++j)
+            M[i][j] = A[i][j] - B[i][j];
+}
+
+// mat3 Scaling
+LINMATH_H_FUNC void mat3_scale(mat3 M, mat3 const A, float s) {
+    int i, j;
+    for(i = 0; i < 3; ++i)
+        for(j = 0; j < 3; ++j)
+            M[i][j] = A[i][j] * s;
+}
+
+// mat3 Multiplication
+LINMATH_H_FUNC void mat3_mul(mat3 M, mat3 const A, mat3 const B) {
+    mat3 temp;
+    int i, j, k;
+    for(i = 0; i < 3; ++i) {
+        for(j = 0; j < 3; ++j) {
+            temp[i][j] = 0.f;
+            for(k = 0; k < 3; ++k) {
+                temp[i][j] += A[i][k] * B[k][j];
+            }
+        }
+    }
+    mat3_dup(M, temp);
+}
+
+// mat3 Transpose
+LINMATH_H_FUNC void mat3_transpose(mat3 M, mat3 const A) {
+    int i, j;
+    for(i = 0; i < 3; ++i)
+        for(j = 0; j < 3; ++j)
+            M[i][j] = A[j][i];
+}
+
+// mat3 Inversion
+LINMATH_H_FUNC void mat3_invert(mat3 M, mat3 const A) {
+    float det;
+    mat3 temp;
+
+    temp[0][0] = A[1][1] * A[2][2] - A[1][2] * A[2][1];
+    temp[0][1] = A[0][2] * A[2][1] - A[0][1] * A[2][2];
+    temp[0][2] = A[0][1] * A[1][2] - A[0][2] * A[1][1];
+
+    temp[1][0] = A[1][2] * A[2][0] - A[1][0] * A[2][2];
+    temp[1][1] = A[0][0] * A[2][2] - A[0][2] * A[2][0];
+    temp[1][2] = A[0][2] * A[1][0] - A[0][0] * A[1][2];
+
+    temp[2][0] = A[1][0] * A[2][1] - A[1][1] * A[2][0];
+    temp[2][1] = A[0][1] * A[2][0] - A[0][0] * A[2][1];
+    temp[2][2] = A[0][0] * A[1][1] - A[0][1] * A[1][0];
+
+    det = A[0][0] * temp[0][0] + A[0][1] * temp[1][0] + A[0][2] * temp[2][0];
+    det = 1.0f / det;
+
+    int i, j;
+    for(i = 0; i < 3; ++i)
+        for(j = 0; j < 3; ++j)
+            M[i][j] = temp[i][j] * det;
+}
+
+// mat3 Rotation around Z-axis
+LINMATH_H_FUNC void mat3_rotate_Z(mat3 R, float angle) {
+    float c = cosf(angle);
+    float s = sinf(angle);
+    mat3_identity(R);
+    R[0][0] = c;
+    R[0][1] = s;
+    R[1][0] = -s;
+    R[1][1] = c;
+}
+
+// mat3 Rotation around Y-axis
+LINMATH_H_FUNC void mat3_rotate_Y(mat3 R, float angle) {
+    float c = cosf(angle);
+    float s = sinf(angle);
+    mat3_identity(R);
+    R[0][0] = c;
+    R[0][2] = -s;
+    R[2][0] = s;
+    R[2][2] = c;
+}
+
+// mat3 Rotation around X-axis
+LINMATH_H_FUNC void mat3_rotate_X(mat3 R, float angle) {
+    float c = cosf(angle);
+    float s = sinf(angle);
+    mat3_identity(R);
+    R[1][1] = c;
+    R[1][2] = s;
+    R[2][1] = -s;
+    R[2][2] = c;
+}
+
+// mat3 Scaling
+LINMATH_H_FUNC void mat3_scale_uniform(mat3 S, float scale) {
+    mat3_identity(S);
+    S[0][0] = S[1][1] = S[2][2] = scale;
+}
+
+// mat3 Scaling with different factors
+LINMATH_H_FUNC void mat3_scale_nonuniform(mat3 S, float sx, float sy, float sz) {
+    mat3_identity(S);
+    S[0][0] = sx;
+    S[1][1] = sy;
+    S[2][2] = sz;
+}
+
+// mat3 Multiply with vec3
+LINMATH_H_FUNC void mat3_mul_vec3(vec3 r, mat3 const M, vec3 const v) {
+    int i;
+    for(i = 0; i < 3; ++i) {
+        r[i] = M[i][0] * v[0] + M[i][1] * v[1] + M[i][2] * v[2];
+    }
+}
+// Print function for mat3
+LINMATH_H_FUNC void print_mat3(mat3 const M) {
+	for (int i = 0; i < 3; ++i) {
+		printf("| ");
+		for (int j = 0; j < 3; ++j) {
+			printf("%f ", M[i][j]);
+		}
+		printf("|\n");
+	}
+}
+
 #endif
