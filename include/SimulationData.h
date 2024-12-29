@@ -10,10 +10,9 @@ struct SimulationData {
     float turn_speed;           // Turning speed for spores
     float sensor_distance;      // Distance spores "sense"
     float delta_time;
-    vec3 camera_position;
-    float padding1;  // #DEFINE_REMOVE_FROM_SHADER
-    vec3 camera_focus;
-    float padding2; // #DEFINE_REMOVE_FROM_SHADER
+    vec4 camera_position; // Must be aligned on 16 bytes!!
+    vec4 camera_focus; // Must be aligned on 16 bytes!!
+    float sensor_angle;
 };
 
 #endif //SIMULATIONDATA_H

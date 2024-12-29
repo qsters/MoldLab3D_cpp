@@ -82,7 +82,7 @@ float map_the_world(in vec3 point) {
     ivec3 searchPoint = center / sdfReductionFactor;
     vec4 sdfValue = imageLoad(sdfData, searchPoint);
 
-    float cameraSDF = distance_from_sphere(point, settings.camera_position, float(settings.grid_size) / 4.0);
+    float cameraSDF = distance_from_sphere(point, settings.camera_position.xyz, float(settings.grid_size) / 4.0);
 
     // skip this if the closest cube is less than the max betwen the search radius and the reduction factor times by the diagonal of the cube to make sure it will account for diagonal movement.
     if (sdfValue.w > max(sdfReductionFactor, searchRadius) * 1.8) {
@@ -132,7 +132,7 @@ float map_the_world_transparent(in vec3 point) {
     ivec3 searchPoint = center / sdfReductionFactor;
     vec4 sdfValue = imageLoad(sdfData, searchPoint);
 
-    float cameraSDF = distance_from_sphere(point, settings.camera_position, float(settings.grid_size) / 4.0);
+    float cameraSDF = distance_from_sphere(point, settings.camera_position.xyz, float(settings.grid_size) / 4.0);
 
     result = sdfValue.w;
     result = max(result, -cameraSDF);
@@ -183,7 +183,7 @@ vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
         vec3 current_position = rayOrigin + total_distance_traveled * rayDirection;
 
         // If traveled too far, or exited the bounds, return red (for now)
-        if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE || distance_from_cube(current_position, settings.camera_focus, settings.grid_size) > 1) {
+        if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE || distance_from_cube(current_position, settings.camera_focus.xyz, settings.grid_size) > 1) {
             return vec3(i / float(NUMBER_OF_STEPS), 0.0, 0.0);
         }
 
@@ -221,7 +221,7 @@ vec3 ray_march_transparency(in vec3 rayOrigin, in vec3 rayDirection) {
         }
 
         // If exited the bounds, or opacity is full, return accumulated color
-        if (distance_from_cube(current_position, settings.camera_focus, settings.grid_size) > 1 ||
+        if (distance_from_cube(current_position, settings.camera_focus.xyz, settings.grid_size) > 1 ||
         max(opacity_accumulator.x, max(opacity_accumulator.y, opacity_accumulator.z)) >= 1.0f) {
             return opacity_accumulator; // Return the accumulated color
         }
@@ -258,13 +258,13 @@ bool intersectsAABB(vec3 rayOrigin, vec3 rayDirection, vec3 gridMin, vec3 gridMa
 
 void main() {
     // Calculate camera orientation
-    vec3 forward = normalize(settings.camera_focus - settings.camera_position); // Forward direction
+    vec3 forward = normalize(settings.camera_focus.xyz - settings.camera_position.xyz); // Forward direction
     vec3 worldUp = vec3(0.0, 1.0, 0.0); // World up vector
     vec3 right = normalize(cross(worldUp, forward)); // Right vector
     vec3 up = cross(forward, right); // Up vector
 
     // Ray origin and direction
-    vec3 rayOrigin = settings.camera_position;
+    vec3 rayOrigin = settings.camera_position.xyz;
     vec3 rayDirection = normalize(uv.x * right + uv.y * up + forward); // Combine screen-space uv with camera orientation
 
     vec3 gridMin = vec3(0.0);

@@ -84,6 +84,13 @@ LINMATH_H_FUNC void set_vec3(vec3 v, float x, float y, float z) {
 	v[2] = z;
 }
 
+LINMATH_H_FUNC void set_vec4(vec3 v, float x, float y, float z, float w) {
+	v[0] = x;
+	v[1] = y;
+	v[2] = z;
+	v[3] = w;
+}
+
 LINMATH_H_FUNC void vec3_reflect(vec3 r, vec3 const v, vec3 const n)
 {
 	float p = 2.f * vec3_mul_inner(v, n);

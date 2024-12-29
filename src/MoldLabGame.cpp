@@ -254,7 +254,7 @@ void MoldLabGame::HandleCameraMovement(const float orbitRadius, const float delt
     angle += ROTATION_SPEED * deltaTime;
 
     constexpr float gridCenter = (GRID_SIZE - 1.0f) * 0.5f; // Adjust for the centered cube positions
-    set_vec3(simulationSettings.camera_focus, gridCenter, gridCenter, gridCenter);
+    set_vec4(simulationSettings.camera_focus, gridCenter, gridCenter, gridCenter, 0.0);
 
     // Adjust horizontal angle
     if (inputState.isLeftPressed) {
@@ -285,10 +285,10 @@ void MoldLabGame::HandleCameraMovement(const float orbitRadius, const float delt
     float z = orbitRadius * cos(altitude) * cos(azimuth);
 
     // Get the focus point position
-    const vec3 &focusPoint = simulationSettings.camera_focus;
+    const vec4 &focusPoint = simulationSettings.camera_focus;
 
     // Offset camera position by focus point
-    set_vec3(simulationSettings.camera_position, focusPoint[0] + x, focusPoint[1] + y, focusPoint[2] + z);
+    set_vec4(simulationSettings.camera_position, focusPoint[0] + x, focusPoint[1] + y, focusPoint[2] + z, 0.0);
 }
 
 void MoldLabGame::DispatchComputeShaders() const {
