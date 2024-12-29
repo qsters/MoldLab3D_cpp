@@ -18,8 +18,6 @@ layout(std430, binding = 1) buffer SettingsBuffer {
 
 layout(binding = 0, r32f) uniform image3D voxelData;
 
-
-
 float sense(vec3 position, vec3 direction, int gridSize, float sensorDistance) {
     // Calculate the sampling position
     vec3 samplePosition = position + normalize(direction) * sensorDistance;
@@ -43,61 +41,35 @@ void main() {
     }
 
     Spore spore = spores[sporeID];
+    vec3 sporePosition = spore.position.xyz;
+
+    vec3 forwardDirection = spore.orientation[2];
 
     // Calculate the new position by moving forward in the direction of the spore's direction vector
-    vec3 newPosition = spore.position + spore.direction * settings.spore_speed * settings.delta_time;
-    vec3 newDirection = spore.direction;
+    vec3 newPosition = sporePosition + forwardDirection * settings.spore_speed * settings.delta_time;
 
-    vec3 forward = spore.direction;
-    vec3 right = -normalize(cross(forward, vec3(0.0, 1.0, 0.0))); // Generate right vector
-    if (length(right) == 0.0) right = vec3(1.0, 0.0, 0.0);        // Handle parallel case
-    vec3 up = normalize(cross(right, forward));                   // Generate up vector
-
-    // Compute mix factors using trigonometric functions
-    float normalFactor = sin(settings.sensor_angle); // [0 at 0, 1 at PI/2, 0 at PI]
-    float reverseFactor = cos(settings.sensor_angle); // [1 at 0, 0 at PI/2, -1 at PI]
-
-    // Interpolate sensor positions based on sensor_angle
-    vec3 sensor_right = normalize(mix(forward, right, normalFactor) * (1.0 - abs(reverseFactor)) + forward * reverseFactor);
-    vec3 sensor_left = normalize(mix(forward, -right, normalFactor) * (1.0 - abs(reverseFactor)) + forward * reverseFactor);
-    vec3 sensor_up = normalize(mix(forward, up, normalFactor) * (1.0 - abs(reverseFactor)) + forward * reverseFactor);
-    vec3 sensor_down = normalize(mix(forward, -up, normalFactor) * (1.0 - abs(reverseFactor)) + forward * reverseFactor);
-
-    // Sense weights at the interpolated sensor positions
-    float forwardWeight = sense(spore.position, forward, settings.grid_size, settings.sensor_distance);
-    float rightWeight = sense(spore.position, sensor_right, settings.grid_size, settings.sensor_distance);
-    float leftWeight = sense(spore.position, sensor_left, settings.grid_size, settings.sensor_distance);
-    float upWeight = sense(spore.position, sensor_up, settings.grid_size, settings.sensor_distance);
-    float downWeight = sense(spore.position, sensor_down, settings.grid_size, settings.sensor_distance);
-
-    // Adjust direction based on sensed weights
-    vec3 directionChange = vec3(0.0);
-    if (forwardWeight < rightWeight || forwardWeight < leftWeight) {
-        if (rightWeight > leftWeight) {
-            directionChange += right;
-        } else if (leftWeight > rightWeight) {
-            directionChange -= right;
-        }
-    }
-    if (forwardWeight < upWeight || forwardWeight < downWeight) {
-        if (upWeight > downWeight) {
-            directionChange += up;
-        } else if (downWeight > upWeight) {
-            directionChange -= up;
-        }
-    }
-
-    newDirection = normalize(forward + directionChange * (settings.turn_speed * float(3.1415)) * settings.delta_time * 3);
-
-    // Boundary Hit Handler
+    // Store the current position before clamping
     vec3 storePosition = newPosition;
+
+    // Clamp the position within the grid bounds
     newPosition = clamp(newPosition, 0.0f, float(settings.grid_size));
+
+    // Determine if the spore hit any bounds
     bvec3 hitMask = notEqual(newPosition, storePosition);
-    newDirection *= mix(vec3(1), vec3(-1), vec3(hitMask));
+
+    // Reflect the forward direction if a boundary was hit
+    forwardDirection *= mix(vec3(1.0), vec3(-1.0), vec3(hitMask));
+
+    // Update the orientation matrix to reflect the new forward direction
+    spore.orientation[2] = normalize(forwardDirection);
+
+    // Recompute the right and up vectors to ensure the orientation matrix stays orthogonal
+    vec3 right = normalize(cross(spore.orientation[1], spore.orientation[2])); // Recalculate right
+    spore.orientation[0] = right; // Update right vector
+    spore.orientation[1] = normalize(cross(spore.orientation[2], spore.orientation[0])); // Recalculate up vector
 
     // Update the spore's position
-    spore.position = newPosition;
-    spore.direction = newDirection;
+    spore.position = vec4(newPosition, 0.0);
 
     // Write the updated spore back to the buffer
     spores[sporeID] = spore;

@@ -213,6 +213,33 @@ void MoldLabGame::initializeSimulationBuffers() {
     spores = nullptr; // Set to nullptr for safety
 }
 
+void debugOrientation(const Spore& spore) {
+    // Compute the dot products manually
+    float dotRightUp = spore.orientation[0][0] * spore.orientation[1][0] +
+                       spore.orientation[0][1] * spore.orientation[1][1] +
+                       spore.orientation[0][2] * spore.orientation[1][2];
+
+    float dotRightForward = spore.orientation[0][0] * spore.orientation[2][0] +
+                            spore.orientation[0][1] * spore.orientation[2][1] +
+                            spore.orientation[0][2] * spore.orientation[2][2];
+
+    float dotUpForward = spore.orientation[1][0] * spore.orientation[2][0] +
+                         spore.orientation[1][1] * spore.orientation[2][1] +
+                         spore.orientation[1][2] * spore.orientation[2][2];
+
+    // Print the dot products
+    printf("Dot(Right, Up): %f\n", dotRightUp);         // Should be close to 0
+    printf("Dot(Right, Forward): %f\n", dotRightForward); // Should be close to 0
+    printf("Dot(Up, Forward): %f\n", dotUpForward);     // Should be close to 0
+
+    // Optionally print the matrix to verify values
+    printf("Orientation Matrix:\n");
+    for (int i = 0; i < 3; ++i) { // Only print the 3x3 portion of the mat4x4
+        printf("[%f, %f, %f]\n", spore.orientation[i][0], spore.orientation[i][1], spore.orientation[i][2]);
+    }
+}
+
+
 Spore MoldLabGame::CreateRandomSpore() {
     Spore spore{};
 
@@ -221,15 +248,15 @@ Spore MoldLabGame::CreateRandomSpore() {
     spore.position[1] = static_cast<float>(rand() % GRID_SIZE);
     spore.position[2] = static_cast<float>(rand() % GRID_SIZE);
 
-    // Random direction vector (normalized)
-    float dirX = static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f; // Range [-1, 1]
-    float dirY = static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f;
-    float dirZ = static_cast<float>(rand()) / RAND_MAX * 2.0f - 1.0f;
+    // Generate random angles for yaw (Y-axis) and pitch (X-axis)
+    const float randomYaw = static_cast<float>(rand()) / RAND_MAX * 2.0f * M_PI;   // Yaw angle in radians
+    const float randomPitch = static_cast<float>(rand()) / RAND_MAX * M_PI;        // Pitch angle in radians
 
-    float magnitude = sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
-    spore.direction[0] = dirX / magnitude;
-    spore.direction[1] = dirY / magnitude;
-    spore.direction[2] = dirZ / magnitude;
+    // Apply yaw rotation (around Y-axis)
+    mat3_rotate_Y(spore.orientation, randomYaw);
+    mat3_rotate_X(spore.orientation, randomPitch);
+
+    // debugOrientation(spore);
 
     return spore;
 }
