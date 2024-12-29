@@ -251,10 +251,13 @@ Spore MoldLabGame::CreateRandomSpore() {
     // Generate random angles for yaw (Y-axis) and pitch (X-axis)
     const float randomYaw = static_cast<float>(rand()) / RAND_MAX * 2.0f * M_PI;   // Yaw angle in radians
     const float randomPitch = static_cast<float>(rand()) / RAND_MAX * M_PI;        // Pitch angle in radians
+    mat3 yawRotation;
+    mat3_identity(yawRotation);
 
-    // Apply yaw rotation (around Y-axis)
-    mat3_rotate_Y(spore.orientation, randomYaw);
+    // Apply yaw rotations
+    mat3_rotate_Y(yawRotation, randomYaw);
     mat3_rotate_X(spore.orientation, randomPitch);
+    mat3_mul(spore.orientation, yawRotation, spore.orientation);
 
     // debugOrientation(spore);
 
