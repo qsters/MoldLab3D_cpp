@@ -370,6 +370,7 @@ void MoldLabGame::renderingStart() {
     simulationSettings.decay_speed = SPORE_DECAY;
     simulationSettings.turn_speed = SPORE_TURN_SPEED;
     simulationSettings.sensor_distance = SPORE_SENSOR_DISTANCE;
+    simulationSettings.sensor_angle = SPORE_SENSOR_ANGLE;
 
     initializeSpores();
 
@@ -422,6 +423,8 @@ void MoldLabGame::renderUI() {
     ImGui::SliderFloat("Turn Speed", &simulationSettings.turn_speed, 0.0f, 10.0f);
     ImGui::SliderFloat("Decay Speed", &simulationSettings.decay_speed, 0.0f, 10.0f);
     ImGui::SliderFloat("Sensor Distance", &simulationSettings.sensor_distance, 0.0f, GRID_SIZE / 4.0);
+    ImGui::SliderFloat("Sensor Angle", &simulationSettings.sensor_angle, 0.0f, M_PI);
+
     bool previousState = useTransparency; // Track the previous state
     if (ImGui::Checkbox("Use Transparency", &useTransparency)) {
         if (useTransparency != previousState) {

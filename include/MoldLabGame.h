@@ -11,7 +11,9 @@ constexpr int SPORE_COUNT = 1000000;
 constexpr float SPORE_SPEED = 10;
 constexpr float SPORE_DECAY = 0.33;
 constexpr float SPORE_SENSOR_DISTANCE = 10.0;
-constexpr float SPORE_TURN_SPEED = 5.0;
+constexpr float SPORE_SENSOR_ANGLE = M_PI / 2.0;
+constexpr float SPORE_TURN_SPEED = 1.0;
+constexpr float SPORE_ROTATION_SPEED = 1.0;
 
 constexpr int SDF_REDUCTION_FACTOR = 2;
 

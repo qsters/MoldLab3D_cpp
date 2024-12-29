@@ -27,6 +27,9 @@ float sense(vec3 position, vec3 direction, int gridSize, float sensorDistance) {
     // Clamp the sampling position to the grid boundaries
     ivec3 clampedPosition = ivec3(clamp(samplePosition, vec3(0.0), vec3(gridSize - 1)));
 
+    // TODO: Remove this test line
+//    imageStore(voxelData, clampedPosition, vec4(0.5));
+
     // Return the voxel data at the sampled position
     return imageLoad(voxelData, clampedPosition).x;
 }
@@ -46,15 +49,26 @@ void main() {
     vec3 newDirection = spore.direction;
 
     vec3 forward = spore.direction;
-    vec3 right = normalize(cross(forward, vec3(0.0, 1.0, 0.0))); // Generate right vector
-    if (length(right) == 0.0) right = vec3(1.0, 0.0, 0.0);       // Handle parallel case
-    vec3 up = normalize(cross(right, forward));                  // Generate up vector
+    vec3 right = -normalize(cross(forward, vec3(0.0, 1.0, 0.0))); // Generate right vector
+    if (length(right) == 0.0) right = vec3(1.0, 0.0, 0.0);        // Handle parallel case
+    vec3 up = normalize(cross(right, forward));                   // Generate up vector
 
+    // Compute mix factors using trigonometric functions
+    float normalFactor = sin(settings.sensor_angle); // [0 at 0, 1 at PI/2, 0 at PI]
+    float reverseFactor = cos(settings.sensor_angle); // [1 at 0, 0 at PI/2, -1 at PI]
+
+    // Interpolate sensor positions based on sensor_angle
+    vec3 sensor_right = normalize(mix(forward, right, normalFactor) * (1.0 - abs(reverseFactor)) + forward * reverseFactor);
+    vec3 sensor_left = normalize(mix(forward, -right, normalFactor) * (1.0 - abs(reverseFactor)) + forward * reverseFactor);
+    vec3 sensor_up = normalize(mix(forward, up, normalFactor) * (1.0 - abs(reverseFactor)) + forward * reverseFactor);
+    vec3 sensor_down = normalize(mix(forward, -up, normalFactor) * (1.0 - abs(reverseFactor)) + forward * reverseFactor);
+
+    // Sense weights at the interpolated sensor positions
     float forwardWeight = sense(spore.position, forward, settings.grid_size, settings.sensor_distance);
-    float rightWeight = sense(spore.position, right, settings.grid_size, settings.sensor_distance);
-    float leftWeight = sense(spore.position, -right, settings.grid_size, settings.sensor_distance);
-    float upWeight = sense(spore.position, up, settings.grid_size, settings.sensor_distance);
-    float downWeight = sense(spore.position, -up, settings.grid_size, settings.sensor_distance);
+    float rightWeight = sense(spore.position, sensor_right, settings.grid_size, settings.sensor_distance);
+    float leftWeight = sense(spore.position, sensor_left, settings.grid_size, settings.sensor_distance);
+    float upWeight = sense(spore.position, sensor_up, settings.grid_size, settings.sensor_distance);
+    float downWeight = sense(spore.position, sensor_down, settings.grid_size, settings.sensor_distance);
 
     // Adjust direction based on sensed weights
     vec3 directionChange = vec3(0.0);
@@ -73,7 +87,7 @@ void main() {
         }
     }
 
-    newDirection = normalize(forward + directionChange * settings.turn_speed * settings.delta_time);
+    newDirection = normalize(forward + directionChange * (settings.turn_speed * float(3.1415)) * settings.delta_time * 3);
 
     // Boundary Hit Handler
     vec3 storePosition = newPosition;
