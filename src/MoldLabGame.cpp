@@ -209,8 +209,9 @@ void MoldLabGame::initializeSimulationBuffers() {
     uploadSettingsBuffer(simulationSettingsBuffer, simulationSettings);
 
     // Free the spores memory as it's no longer needed
-    delete[] spores;
-    spores = nullptr; // Set to nullptr for safety
+    // TODO: uncomment this when done testin
+    // delete[] spores;
+    // spores = nullptr; // Set to nullptr for safety
 }
 
 void debugOrientation(const Spore& spore) {
@@ -247,6 +248,7 @@ Spore MoldLabGame::CreateRandomSpore() {
     spore.position[0] = static_cast<float>(rand() % GRID_SIZE);
     spore.position[1] = static_cast<float>(rand() % GRID_SIZE);
     spore.position[2] = static_cast<float>(rand() % GRID_SIZE);
+    mat3_identity(spore.orientation);
 
     // Generate random angles for yaw (Y-axis) and pitch (X-axis)
     const float randomYaw = static_cast<float>(rand()) / RAND_MAX * 2.0f * M_PI;   // Yaw angle in radians
@@ -417,6 +419,33 @@ void MoldLabGame::start() {
 
     DispatchComputeShader(clearGridShaderProgram, GRID_SIZE, GRID_SIZE, GRID_SIZE);
 }
+void retrieveSporesBuffer(GLuint sporesBuffer, Spore* spores, size_t sporesSize) {
+    // Bind the spores buffer
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, sporesBuffer);
+
+    // Retrieve the buffer data from VRAM to the local `spores` array
+    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sporesSize, spores);
+
+    // Unbind the buffer
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    // Debug the data (print the first few spores for verification)
+    for (size_t i = 0; i < 1; ++i) { // Print first 5 spores
+        printf("Spore %zu:\n", i);
+        printf("  Position: (%f, %f, %f)\n", spores[i].position[0], spores[i].position[1], spores[i].position[2]);
+        printf("  Orientation:\n");
+        for (int row = 0; row < 3; ++row) {
+            printf("    [%f, %f, %f]\n",
+                   spores[i].orientation[row][0],
+                   spores[i].orientation[row][1],
+                   spores[i].orientation[row][2]);
+        }
+        std::cout << std::endl;
+        debugOrientation(spores[0]);
+    }
+}
+
+
 
 void MoldLabGame::update(float deltaTime) {
     HandleCameraMovement(orbitRadius, deltaTime);
@@ -430,6 +459,9 @@ void MoldLabGame::update(float deltaTime) {
     } else if (inputState.isAPressed) {
         orbitRadius -= orbitDistanceChange * deltaTime;
     }
+
+    retrieveSporesBuffer(sporesBuffer, spores, sizeof(Spore) * SPORE_COUNT);
+
 
     DispatchComputeShaders();
 }
