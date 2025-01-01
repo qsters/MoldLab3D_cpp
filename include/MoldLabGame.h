@@ -59,7 +59,7 @@ private:
     float orbitRadius = GRID_SIZE * 1.25;    // Distance from the origin
     float rotationSpeed = 1.0f;   // Speed of rotation
 
-    bool useTransparency = false;
+    bool useTransparency = true;
 
     InputState inputState;
 
