@@ -451,10 +451,10 @@ void MoldLabGame::renderUI() {
 
     // Add sliders for test values or other parameters
     ImGui::Begin("Simulation Settings"); // Begin a window
-    ImGui::SliderFloat("Spore Speed", &simulationSettings.spore_speed, 0.0f, 50.0f);
-    ImGui::SliderFloat("Turn Speed", &simulationSettings.turn_speed, 0.0f, 10.0f);
+    ImGui::SliderFloat("Spore Speed", &simulationSettings.spore_speed, 0.0f, static_cast<float>(GRID_SIZE) / 2.0);
+    ImGui::SliderFloat("Turn Speed", &simulationSettings.turn_speed, 0.0f, 5.0f);
     ImGui::SliderFloat("Decay Speed", &simulationSettings.decay_speed, 0.0f, 10.0f);
-    ImGui::SliderFloat("Sensor Distance", &simulationSettings.sensor_distance, 0.0f, GRID_SIZE / 4.0);
+    ImGui::SliderFloat("Sensor Distance", &simulationSettings.sensor_distance, 0.0f, static_cast<float>(GRID_SIZE) / 2.0);
     ImGui::SliderFloat("Sensor Angle", &simulationSettings.sensor_angle, 0.0f, M_PI);
 
     bool previousState = useTransparency; // Track the previous state
