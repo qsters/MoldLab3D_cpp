@@ -111,7 +111,7 @@ void main() {
 
     // Compute rotation angle if a direction other than forward has the maximum weight
     if (rotationAxis != vec3(0.0)) {
-        rotationAngle = settings.turn_speed * settings.delta_time * 3.1415; // Turn speed in radians/sec
+        rotationAngle = settings.turn_speed * settings.delta_time * 6.283; // Turn speed in radians/sec
     }
 
     // Apply rotation to the orientation matrix
