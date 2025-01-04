@@ -1,5 +1,7 @@
 #version 430
 
+#define WRAP_AROUND
+
 #define SPORE_STRUCT
 
 // Simulation Settings
@@ -34,14 +36,19 @@ float sense(vec3 position, vec3 direction, int gridSize, float sensorDistance, b
     // Calculate the sampling position
     vec3 samplePosition = position + normalize(direction) * sensorDistance;
 
-    // Clamp the sampling position to the grid boundaries
-    ivec3 clampedPosition = ivec3(clamp(samplePosition, vec3(0.0), vec3(gridSize - 1)));
+    #ifdef WRAP_AROUND
+    // Wrap the sampling position to the grid boundaries
+    ivec3 sensorPosition = ivec3(mod(samplePosition + float(settings.grid_size), float(settings.grid_size)));
+    #else
+    // Clamp to the grid boundaries
+    ivec3 sensorPosition = ivec3(clamp(samplePosition, vec3(0.0), vec3(gridSize - 1)));
+    #endif
 
     if (debug){
-        imageStore(voxelData, clampedPosition, vec4(0.5));
+        imageStore(voxelData, sensorPosition, vec4(0.5));
     }
     // Return the voxel data at the sampled position
-    return imageLoad(voxelData, clampedPosition).x;
+    return imageLoad(voxelData, sensorPosition).x;
 }
 
 // Function to keep orientation matrix orthogonal
@@ -130,8 +137,11 @@ void main() {
         forward = spore.orientation[2]; // Update forward vector after rotation
     }
 
-    // Calculate the new position by moving forward in the direction of the spore's direction vector
     vec3 newPosition = sporePosition + forward * settings.spore_speed * settings.delta_time;
+    #ifdef WRAP_AROUND
+    // Calculate the new position by moving forward in the direction of the spore's direction vector
+    newPosition = mod(newPosition + float(settings.grid_size), float(settings.grid_size)); // Ensure non-negative wrap-around
+    #else
 
     // Store the current position before clamping
     vec3 storePosition = newPosition;
@@ -145,6 +155,7 @@ void main() {
     // Update forward
     spore.orientation[2] = forward * mix(vec3(1.0), vec3(-1.0), vec3(hitMask));
 
+    #endif
     // Normalize the matrix:
     spore.orientation = normalizeMatrix(spore.orientation);
 

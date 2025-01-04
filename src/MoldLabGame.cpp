@@ -8,6 +8,7 @@
 const std::string USE_TRANSPARENCY_DEFINITION = "#define USE_TRANSPARENCY";
 const std::string SIMULATION_SETTINGS_DEFINITION = "#define SIMULATION_SETTINGS";
 const std::string SPORE_DEFINITION = "#define SPORE_STRUCT";
+const std::string WRAP_GRID_DEFINITION = "#define WRAP_AROUND";
 
 
 constexpr int GRID_TEXTURE_LOCATION = 0;
@@ -29,6 +30,9 @@ MoldLabGame::MoldLabGame(const int width, const int height, const std::string &t
     addShaderDefinition(SIMULATION_SETTINGS_DEFINITION, "include/SimulationData.h");
     if (useTransparency) {
         addShaderDefinition(USE_TRANSPARENCY_DEFINITION, "");
+    }
+    if (wrapGrid) {
+        addShaderDefinition(WRAP_GRID_DEFINITION, "");
     }
     addShaderDefinition(SPORE_DEFINITION, "include/Spore.h");
 }
@@ -68,6 +72,17 @@ void MoldLabGame::initializeRenderShader(bool useTransparency) {
     });
 }
 
+void MoldLabGame::initializeMoveSporesShader(bool wrapAround) {
+    if (!wrapAround) {
+        addShaderDefinition(WRAP_GRID_DEFINITION, "");
+    } else {
+        removeShaderDefinition(WRAP_GRID_DEFINITION);
+    }
+
+    moveSporesShaderProgram = CreateShaderProgram({
+        {"shaders/move_spores.glsl", GL_COMPUTE_SHADER, false}
+    });
+}
 
 void MoldLabGame::initializeShaders() {
     initializeRenderShader(useTransparency);
@@ -77,9 +92,7 @@ void MoldLabGame::initializeShaders() {
         {"shaders/draw_spores.glsl", GL_COMPUTE_SHADER, false}
     });
 
-    moveSporesShaderProgram = CreateShaderProgram({
-        {"shaders/move_spores.glsl", GL_COMPUTE_SHADER, false}
-    });
+    initializeMoveSporesShader(wrapGrid);
 
     decaySporesShaderProgram = CreateShaderProgram({
         {"shaders/decay_spores.glsl", GL_COMPUTE_SHADER, false}
@@ -457,10 +470,17 @@ void MoldLabGame::renderUI() {
     ImGui::SliderFloat("Sensor Distance", &simulationSettings.sensor_distance, 0.0f, static_cast<float>(GRID_SIZE) / 2.0);
     ImGui::SliderFloat("Sensor Angle", &simulationSettings.sensor_angle, 0.0f, M_PI);
 
-    bool previousState = useTransparency; // Track the previous state
+    bool previousTransparentState = useTransparency; // Track the previous state
     if (ImGui::Checkbox("Use Transparency", &useTransparency)) {
-        if (useTransparency != previousState) {
+        if (useTransparency != previousTransparentState) {
             initializeRenderShader(useTransparency);
+        }
+    }
+
+    bool previousWrappingState = wrapGrid; // Track the previous state
+    if (ImGui::Checkbox("Wrap Grid", &wrapGrid)) {
+        if (wrapGrid != previousWrappingState) {
+            initializeMoveSporesShader(wrapGrid);
         }
     }
     ImGui::End(); // End the window

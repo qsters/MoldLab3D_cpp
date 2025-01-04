@@ -60,11 +60,14 @@ private:
     float rotationSpeed = 1.0f;   // Speed of rotation
 
     bool useTransparency = true;
+    bool wrapGrid = true;
 
     InputState inputState;
 
     // Initialization Functions
     void initializeRenderShader(bool useTransparency);
+    void initializeMoveSporesShader(bool wrapAround);
+
     void initializeShaders();
     void initializeUniformVariables();
     void initializeVertexBuffers();
