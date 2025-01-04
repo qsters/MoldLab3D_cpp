@@ -80,12 +80,22 @@ void main() {
     vec3 right = spore.orientation[0];
 
 
-    // Sense voxel data in all relevant directions
+    // Compute sensor rotation factors
+    float normalFactor = sin(settings.sensor_angle);  // Controls how far sensors deviate from forward
+    float reverseFactor = cos(settings.sensor_angle); // Controls how much sensors align/reverse
+
+    // Rotate sensor positions based on sensor_angle
+    vec3 sensor_right = normalize(forward * reverseFactor + right * normalFactor);
+    vec3 sensor_left = normalize(forward * reverseFactor - right * normalFactor);
+    vec3 sensor_up = normalize(forward * reverseFactor + up * normalFactor);
+    vec3 sensor_down = normalize(forward * reverseFactor - up * normalFactor);
+
+    // Sense voxel data at sensor positions
     float forwardWeight = sense(sporePosition, forward, settings.grid_size, settings.sensor_distance);
-    float upWeight = sense(sporePosition, up, settings.grid_size, settings.sensor_distance);
-    float downWeight = sense(sporePosition, -up, settings.grid_size, settings.sensor_distance);
-    float rightWeight = sense(sporePosition, right, settings.grid_size, settings.sensor_distance);
-    float leftWeight = sense(sporePosition, -right, settings.grid_size, settings.sensor_distance);
+    float rightWeight = sense(sporePosition, sensor_right, settings.grid_size, settings.sensor_distance);
+    float leftWeight = sense(sporePosition, sensor_left, settings.grid_size, settings.sensor_distance);
+    float upWeight = sense(sporePosition, sensor_up, settings.grid_size, settings.sensor_distance);
+    float downWeight = sense(sporePosition, sensor_down, settings.grid_size, settings.sensor_distance);
 
     // Determine the maximum weight and associated rotation axis
     float maxWeight = forwardWeight;
