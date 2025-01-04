@@ -438,7 +438,7 @@ void MoldLabGame::update(float deltaTime) {
 
     simulationSettings.delta_time = deltaTime;
 
-    constexpr float orbitDistanceChange = 40.0;
+    constexpr float orbitDistanceChange = GRID_SIZE / 8.0f;
 
     if (inputState.isDPressed) {
         orbitRadius += orbitDistanceChange * deltaTime;
