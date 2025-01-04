@@ -25,10 +25,15 @@ float sense(vec3 position, vec3 direction, int gridSize, float sensorDistance) {
     vec3 samplePosition = position + normalize(direction) * sensorDistance;
 
     // Clamp the sampling position to the grid boundaries
-    ivec3 clampedPosition = ivec3(clamp(samplePosition, vec3(0.0), vec3(gridSize - 1)));
-
+    #ifdef WRAP_AROUND
+    // Wrap the sampling position to the grid boundaries
+    ivec3 sensorPosition = ivec3(mod(samplePosition + float(settings.grid_size), float(settings.grid_size)));
+    #else
+    // Clamp to the grid boundaries
+    ivec3 sensorPosition = ivec3(clamp(samplePosition, vec3(0.0), vec3(gridSize - 1)));
+    #endif
     // Return the voxel data at the sampled position
-    return imageLoad(voxelData, clampedPosition).x;
+    return imageLoad(voxelData, sensorPosition).x;
 }
 
 // Creating overload so that when it isn't used, it will be removed by compiler and there won't be if checks normally
