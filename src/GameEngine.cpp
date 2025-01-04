@@ -451,6 +451,10 @@ void GameEngine::DispatchComputeShader(const GLuint computeShaderProgram,
         throw std::runtime_error("Dispatch item must be above 0");
     }
 
+    if (computeShaderProgram == 0) {
+        throw std::runtime_error("Shader Program not initialized");
+    }
+
     // Bind the compute shader program
     glUseProgram(computeShaderProgram);
 
