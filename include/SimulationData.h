@@ -9,10 +9,10 @@ struct SimulationData {
     float decay_speed;          // Decay speed
     float turn_speed;           // Turning speed for spores
     float sensor_distance;      // Distance spores "sense"
-    float delta_time;
+    float sensor_angle;
     vec4 camera_position; // Must be aligned on 16 bytes!!
     vec4 camera_focus; // Must be aligned on 16 bytes!!
-    float sensor_angle;
+    float delta_time;
 };
 
 #endif //SIMULATIONDATA_H

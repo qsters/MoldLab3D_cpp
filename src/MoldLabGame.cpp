@@ -21,6 +21,16 @@ constexpr int SIMULATION_BUFFER_LOCATION = 1;
 // ============================
 // Constructor/Destructor
 // ============================
+void assignDefaultsToSimulationData(SimulationData& data) {
+    data.spore_count = SimulationDefaults::SPORE_COUNT;
+    data.grid_size = SimulationDefaults::GRID_SIZE;
+    data.sdf_reduction = SimulationDefaults::SDF_REDUCTION_FACTOR;
+    data.spore_speed = SimulationDefaults::SPORE_SPEED;
+    data.decay_speed = SimulationDefaults::SPORE_DECAY;
+    data.turn_speed = SimulationDefaults::SPORE_TURN_SPEED;
+    data.sensor_distance = SimulationDefaults::SPORE_SENSOR_DISTANCE;
+    data.sensor_angle = SimulationDefaults::SPORE_SENSOR_ANGLE;
+}
 
 MoldLabGame::MoldLabGame(const int width, const int height, const std::string &title)
     : GameEngine(width, height, title, false) {
@@ -34,6 +44,9 @@ MoldLabGame::MoldLabGame(const int width, const int height, const std::string &t
         addShaderDefinition(WRAP_GRID_DEFINITION, "");
     }
     addShaderDefinition(SPORE_DEFINITION, "include/Spore.h");
+
+    // Set the simulation Settings to the Defaults
+    assignDefaultsToSimulationData(simulationSettings);
 }
 
 MoldLabGame::~MoldLabGame() {
@@ -115,7 +128,7 @@ void MoldLabGame::initializeShaders() {
 
 
 void MoldLabGame::initializeUniformVariables() {
-    static int jfaStep = GRID_SIZE;
+    static int jfaStep = simulationSettings.grid_size;
 
     jfaStepSV = ShaderVariable(jumpFloodStepShaderProgram, &jfaStep, "stepSize");
 }
@@ -140,7 +153,7 @@ void MoldLabGame::initializeVertexBuffers() {
 }
 
 void MoldLabGame::initializeVoxelGridBuffer() {
-    constexpr int voxelGridSize = GRID_SIZE;
+     int voxelGridSize = simulationSettings.grid_size;
 
     // ** Create Voxel Grid Texture **
     glGenTextures(1, &voxelGridTexture);
@@ -165,9 +178,9 @@ void MoldLabGame::initializeVoxelGridBuffer() {
 
 
 void MoldLabGame::initializeSDFBuffer() {
-    constexpr int reducedGridSize = GRID_SIZE / SDF_REDUCTION_FACTOR;
+     int reducedGridSize = simulationSettings.grid_size / simulationSettings.sdf_reduction;
 
-    if constexpr (GRID_SIZE % SDF_REDUCTION_FACTOR != 0) {
+    if  (simulationSettings.grid_size % simulationSettings.sdf_reduction != 0) {
         // ReSharper disable once CppDFAUnreachableCode
         std::cerr << "Warning: GRID_SIZE is not evenly divisible by SDF_REDUCTION_FACTOR!" << std::endl;
     }
@@ -211,7 +224,7 @@ void uploadSettingsBuffer(GLuint simulationSettingsBuffer, const SimulationData 
 }
 
 void MoldLabGame::initializeSimulationBuffers() {
-    constexpr GLsizeiptr sporesSize = sizeof(Spore) * SPORE_COUNT;
+     GLsizeiptr sporesSize = sizeof(Spore) * simulationSettings.spore_count;
 
 
     glGenBuffers(1, &sporesBuffer);
@@ -231,26 +244,28 @@ void MoldLabGame::initializeSimulationBuffers() {
 void MoldLabGame::HandleCameraMovement(const float orbitRadius, const float deltaTime) {
     static float angle = 0.0f; // Current angle of rotation
 
-    // Update the angle
-    angle += ROTATION_SPEED * deltaTime;
+    constexpr float rotationSpeed = 100.0f;
 
-    constexpr float gridCenter = (GRID_SIZE - 1.0f) * 0.5f; // Adjust for the centered cube positions
+    // Update the angle
+    angle += rotationSpeed * deltaTime;
+
+     float gridCenter = (simulationSettings.grid_size - 1.0f) * 0.5f; // Adjust for the centered cube positions
     set_vec4(simulationSettings.camera_focus, gridCenter, gridCenter, gridCenter, 0.0);
 
     // Adjust horizontal angle
     if (inputState.isLeftPressed) {
-        horizontalAngle += ROTATION_SPEED * deltaTime;
+        horizontalAngle += rotationSpeed * deltaTime;
     }
     if (inputState.isRightPressed) {
-        horizontalAngle -= ROTATION_SPEED * deltaTime;
+        horizontalAngle -= rotationSpeed * deltaTime;
     }
 
     // Adjust vertical angle (clamped to avoid flipping)
     if (inputState.isUpPressed) {
-        verticalAngle = std::min(verticalAngle + ROTATION_SPEED * deltaTime, 89.0f);
+        verticalAngle = std::min(verticalAngle + rotationSpeed * deltaTime, 89.0f);
     }
     if (inputState.isDownPressed) {
-        verticalAngle = std::max(verticalAngle - ROTATION_SPEED * deltaTime, -89.0f);
+        verticalAngle = std::max(verticalAngle - rotationSpeed * deltaTime, -89.0f);
     }
 
     // Ensure angles wrap around properly
@@ -273,18 +288,22 @@ void MoldLabGame::HandleCameraMovement(const float orbitRadius, const float delt
 }
 
 void MoldLabGame::resetSporesAndGrid() const {
-    DispatchComputeShader(clearGridShaderProgram, GRID_SIZE, GRID_SIZE, GRID_SIZE);
-    DispatchComputeShader(randomizeSporesShaderProgram, SPORE_COUNT, 1, 1);
+    const int gridSize = simulationSettings.grid_size;
+
+    DispatchComputeShader(clearGridShaderProgram, gridSize, gridSize, gridSize);
+    DispatchComputeShader(randomizeSporesShaderProgram, simulationSettings.spore_count, 1, 1);
 }
 
 
 void MoldLabGame::DispatchComputeShaders() const {
+    int gridSize = simulationSettings.grid_size;
+
     uploadSettingsBuffer(simulationSettingsBuffer, simulationSettings);
 
-    DispatchComputeShader(decaySporesShaderProgram, GRID_SIZE, GRID_SIZE, GRID_SIZE);
+    DispatchComputeShader(decaySporesShaderProgram, gridSize, gridSize, gridSize);
 
-    DispatchComputeShader(moveSporesShaderProgram, SPORE_COUNT, 1, 1);
-    DispatchComputeShader(drawSporesShaderProgram, SPORE_COUNT, 1, 1);
+    DispatchComputeShader(moveSporesShaderProgram, simulationSettings.spore_count, 1, 1);
+    DispatchComputeShader(drawSporesShaderProgram, simulationSettings.spore_count, 1, 1);
     executeJFA();
 }
 
@@ -297,7 +316,7 @@ void MoldLabGame::executeJFA() const {
     glBindImageTexture(SDF_TEXTURE_READ_LOCATION, readTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F); // set it to write ONLY for initialization
 
 
-    constexpr int reducedGridSize = GRID_SIZE / SDF_REDUCTION_FACTOR;
+     int reducedGridSize = simulationSettings.grid_size / simulationSettings.sdf_reduction;
     DispatchComputeShader(jumpFloodInitShaderProgram, reducedGridSize, reducedGridSize, reducedGridSize);
     // inits the read, for later use
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -349,16 +368,6 @@ void MoldLabGame::renderingStart() {
 
     initializeSDFBuffer();
 
-
-    simulationSettings.spore_count = SPORE_COUNT;
-    simulationSettings.grid_size = GRID_SIZE;
-    simulationSettings.sdf_reduction = SDF_REDUCTION_FACTOR;
-    simulationSettings.spore_speed = SPORE_SPEED;
-    simulationSettings.decay_speed = SPORE_DECAY;
-    simulationSettings.turn_speed = SPORE_TURN_SPEED;
-    simulationSettings.sensor_distance = SPORE_SENSOR_DISTANCE;
-    simulationSettings.sensor_angle = SPORE_SENSOR_ANGLE;
-
     // initializeSpores();
 
     initializeSimulationBuffers();
@@ -381,7 +390,7 @@ void MoldLabGame::update(float deltaTime) {
 
     simulationSettings.delta_time = deltaTime;
 
-    constexpr float orbitDistanceChange = GRID_SIZE / 8.0f;
+     float orbitDistanceChange = static_cast<float>(simulationSettings.grid_size) / 8.0f;
 
     if (inputState.isDPressed) {
         orbitRadius += orbitDistanceChange * deltaTime;
@@ -407,10 +416,10 @@ void MoldLabGame::renderUI() {
 
     // Add sliders for test values or other parameters
     ImGui::Begin("Simulation Settings"); // Begin a window
-    ImGui::SliderFloat("Spore Speed", &simulationSettings.spore_speed, 0.0f, static_cast<float>(GRID_SIZE) / 2.0);
+    ImGui::SliderFloat("Spore Speed", &simulationSettings.spore_speed, 0.0f, static_cast<float>(simulationSettings.grid_size) / 2.0);
     ImGui::SliderFloat("Turn Speed", &simulationSettings.turn_speed, 0.0f, 5.0f);
     ImGui::SliderFloat("Decay Speed", &simulationSettings.decay_speed, 0.0f, 10.0f);
-    ImGui::SliderFloat("Sensor Distance", &simulationSettings.sensor_distance, 0.0f, static_cast<float>(GRID_SIZE) / 2.0);
+    ImGui::SliderFloat("Sensor Distance", &simulationSettings.sensor_distance, 0.0f, static_cast<float>(simulationSettings.grid_size) / 2.0);
     ImGui::SliderFloat("Sensor Angle", &simulationSettings.sensor_angle, 0.0f, M_PI);
 
     bool previousTransparentState = useTransparency; // Track the previous state

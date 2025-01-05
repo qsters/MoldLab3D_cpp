@@ -6,18 +6,19 @@
 #include "SimulationData.h"
 #include "Spore.h"
 
-constexpr int GRID_SIZE = 500;
-constexpr int SPORE_COUNT = 1'000'000;
-constexpr float SPORE_SPEED = 10;
-constexpr float SPORE_DECAY = 0.33;
-constexpr float SPORE_SENSOR_DISTANCE = 10.0;
-constexpr float SPORE_SENSOR_ANGLE = M_PI / 2.0;
-constexpr float SPORE_TURN_SPEED = 1.0;
-constexpr float SPORE_ROTATION_SPEED = 1.0;
+struct SimulationDefaults {
+    static constexpr int GRID_SIZE = 500;
+    static constexpr int SPORE_COUNT = 1'000'000;
+    static constexpr float SPORE_SPEED = 10.0f;
+    static constexpr float SPORE_DECAY = 0.33f;
+    static constexpr float SPORE_SENSOR_DISTANCE = 10.0f;
+    static constexpr float SPORE_SENSOR_ANGLE = M_PI / 2.0f;
+    static constexpr float SPORE_TURN_SPEED = 1.0f;
+    static constexpr float SPORE_ROTATION_SPEED = 1.0f;
+    static constexpr int SDF_REDUCTION_FACTOR = 2;
+};
 
-constexpr int SDF_REDUCTION_FACTOR = 2;
 
-constexpr float ROTATION_SPEED =  100.0f;
 
 struct InputState {
     bool isDPressed = false;
@@ -51,7 +52,7 @@ private:
 
     float horizontalAngle = 90.0f; // Rotation angle around the Y-axis
     float verticalAngle = 0.0f;   // Rotation angle around the X-axis
-    float orbitRadius = GRID_SIZE * 1.25;    // Distance from the origin
+    float orbitRadius = SimulationDefaults::GRID_SIZE * 1.25;    // Distance from the origin
     float rotationSpeed = 1.0f;   // Speed of rotation
 
     bool useTransparency = true;
