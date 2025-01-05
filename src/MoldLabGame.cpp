@@ -416,6 +416,7 @@ void MoldLabGame::renderUI() {
 
     // Add sliders for test values or other parameters
     ImGui::Begin("Simulation Settings"); // Begin a window
+    ImGui::SliderInt("Spore Count", &simulationSettings.spore_count, 1, SimulationDefaults::SPORE_COUNT);
     ImGui::SliderFloat("Spore Speed", &simulationSettings.spore_speed, 0.0f, static_cast<float>(simulationSettings.grid_size) / 2.0);
     ImGui::SliderFloat("Turn Speed", &simulationSettings.turn_speed, 0.0f, 5.0f);
     ImGui::SliderFloat("Decay Speed", &simulationSettings.decay_speed, 0.0f, 10.0f);
