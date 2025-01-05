@@ -24,7 +24,6 @@ constexpr int SIMULATION_BUFFER_LOCATION = 1;
 
 MoldLabGame::MoldLabGame(const int width, const int height, const std::string &title)
     : GameEngine(width, height, title, false) {
-    spores = new Spore[SPORE_COUNT]();
     displayFramerate = true;
 
     addShaderDefinition(SIMULATION_SETTINGS_DEFINITION, "include/SimulationData.h");
@@ -52,7 +51,6 @@ MoldLabGame::~MoldLabGame() {
         glDeleteTextures(1, &sdfTexBuffer1);
     if (sdfTexBuffer2)
         glDeleteTextures(1, &sdfTexBuffer2);
-    delete[] spores;
 
     std::cout << "Exiting..." << std::endl;
 }
@@ -224,72 +222,6 @@ void MoldLabGame::initializeSimulationBuffers() {
 
     // **Settings Buffer**
     uploadSettingsBuffer(simulationSettingsBuffer, simulationSettings);
-
-    // Free the spores memory as it's no longer needed
-    delete[] spores;
-    spores = nullptr; // Set to nullptr for safety
-}
-
-void debugOrientation(const Spore& spore) {
-    // Compute the dot products manually
-    float dotRightUp = spore.orientation[0][0] * spore.orientation[1][0] +
-                       spore.orientation[0][1] * spore.orientation[1][1] +
-                       spore.orientation[0][2] * spore.orientation[1][2];
-
-    float dotRightForward = spore.orientation[0][0] * spore.orientation[2][0] +
-                            spore.orientation[0][1] * spore.orientation[2][1] +
-                            spore.orientation[0][2] * spore.orientation[2][2];
-
-    float dotUpForward = spore.orientation[1][0] * spore.orientation[2][0] +
-                         spore.orientation[1][1] * spore.orientation[2][1] +
-                         spore.orientation[1][2] * spore.orientation[2][2];
-
-    // Print the dot products
-    printf("Dot(Right, Up): %f\n", dotRightUp);         // Should be close to 0
-    printf("Dot(Right, Forward): %f\n", dotRightForward); // Should be close to 0
-    printf("Dot(Up, Forward): %f\n", dotUpForward);     // Should be close to 0
-
-    // Optionally print the matrix to verify values
-    printf("Orientation Matrix:\n");
-    for (int i = 0; i < 3; ++i) { // Only print the 3x3 portion of the mat4x4
-        printf("[%f, %f, %f]\n", spore.orientation[i][0], spore.orientation[i][1], spore.orientation[i][2]);
-    }
-}
-
-
-Spore MoldLabGame::CreateRandomSpore() {
-    Spore spore{};
-
-    // Random position between 0 and GRID_SIZE - 1
-    spore.position[0] = static_cast<float>(rand() % GRID_SIZE);
-    spore.position[1] = static_cast<float>(rand() % GRID_SIZE);
-    spore.position[2] = static_cast<float>(rand() % GRID_SIZE);
-
-    mat3_identity(spore.orientation);
-
-    // Generate random angles for yaw (Y-axis) and pitch (X-axis)
-    const float randomYaw = static_cast<float>(rand()) / RAND_MAX * 2.0f * M_PI;   // Yaw angle in radians
-    const float randomPitch = static_cast<float>(rand()) / RAND_MAX * M_PI;        // Pitch angle in radians
-    mat3 yawRotation;
-    mat3_identity(yawRotation);
-
-    // Apply yaw rotations
-    mat3_rotate_Y(yawRotation, randomYaw);
-    mat3_rotate_X(spore.orientation, randomPitch);
-    mat3_mul(spore.orientation, yawRotation, spore.orientation);
-
-    // debugOrientation(spore);
-
-    return spore;
-}
-
-
-void MoldLabGame::initializeSpores() const {
-    srand(static_cast<unsigned int>(time(nullptr)));
-
-    for (int i = 0; i < SPORE_COUNT; i++) {
-        spores[i] = CreateRandomSpore();
-    }
 }
 
 
