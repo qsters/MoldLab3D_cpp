@@ -249,7 +249,7 @@ void MoldLabGame::HandleCameraMovement(const float orbitRadius, const float delt
     // Update the angle
     angle += rotationSpeed * deltaTime;
 
-     float gridCenter = (simulationSettings.grid_size - 1.0f) * 0.5f; // Adjust for the centered cube positions
+     float gridCenter = (static_cast<float>(simulationSettings.grid_size) - 1.0f) * 0.5f; // Adjust for the centered cube positions
     set_vec4(simulationSettings.camera_focus, gridCenter, gridCenter, gridCenter, 0.0);
 
     // Adjust horizontal angle
