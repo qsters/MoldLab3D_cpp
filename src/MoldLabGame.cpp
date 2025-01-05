@@ -124,13 +124,21 @@ void MoldLabGame::initializeShaders() {
     randomizeSporesShaderProgram = CreateShaderProgram({
     {"shaders/randomize_spores.glsl", GL_COMPUTE_SHADER, false}
     });
+
+    scaleSporesShaderProgram = CreateShaderProgram({
+    {"shaders/scale_spores.glsl", GL_COMPUTE_SHADER, false}
+    });
 }
 
 
 void MoldLabGame::initializeUniformVariables() {
     static int jfaStep = simulationSettings.grid_size;
+    static float resizeFactor = 0.0;
+    static int maxSporeSize = SimulationDefaults::SPORE_COUNT;
 
     jfaStepSV = ShaderVariable(jumpFloodStepShaderProgram, &jfaStep, "stepSize");
+    gridResizeFactorSV = ShaderVariable(scaleSporesShaderProgram, &resizeFactor, "gridResizeFactor");
+    maxSporeSizeSV = ShaderVariable(scaleSporesShaderProgram, &maxSporeSize, "maxSporeSize");
 }
 
 
@@ -295,14 +303,19 @@ void MoldLabGame::resetSporesAndGrid() const {
 }
 
 
-void MoldLabGame::DispatchComputeShaders() const {
+void MoldLabGame::DispatchComputeShaders() {
     int gridSize = simulationSettings.grid_size;
 
     uploadSettingsBuffer(simulationSettingsBuffer, simulationSettings);
 
-    DispatchComputeShader(decaySporesShaderProgram, gridSize, gridSize, gridSize);
+    if (!gridSizeChanged) {
+        DispatchComputeShader(decaySporesShaderProgram, gridSize, gridSize, gridSize);
 
-    DispatchComputeShader(moveSporesShaderProgram, simulationSettings.spore_count, 1, 1);
+        DispatchComputeShader(moveSporesShaderProgram, simulationSettings.spore_count, 1, 1);
+    }
+
+    gridSizeChanged = false;
+
     DispatchComputeShader(drawSporesShaderProgram, simulationSettings.spore_count, 1, 1);
     executeJFA();
 }
@@ -417,6 +430,28 @@ void MoldLabGame::renderUI() {
     // Add sliders for test values or other parameters
     ImGui::Begin("Simulation Settings"); // Begin a window
     ImGui::SliderInt("Spore Count", &simulationSettings.spore_count, 1, SimulationDefaults::SPORE_COUNT);
+
+    int previousGridSize = simulationSettings.grid_size;
+    if (ImGui::SliderInt("Grid Size", &simulationSettings.grid_size, 10, SimulationDefaults::GRID_SIZE)) {
+        if (previousGridSize != simulationSettings.grid_size) {
+            uploadSettingsBuffer(simulationSettingsBuffer, simulationSettings);
+            float gridResizeFactor = static_cast<float>(simulationSettings.grid_size) / static_cast<float>(previousGridSize);
+
+            simulationSettings.spore_speed = gridResizeFactor;
+            simulationSettings.sensor_distance *= gridResizeFactor;
+
+            orbitRadius *= gridResizeFactor;
+
+            *gridResizeFactorSV.value = gridResizeFactor;
+
+            glUseProgram(scaleSporesShaderProgram);
+            maxSporeSizeSV.uploadToShader();
+            gridResizeFactorSV.uploadToShader();
+
+            DispatchComputeShader(scaleSporesShaderProgram, *maxSporeSizeSV.value, 1, 1);
+        }
+    }
+
     ImGui::SliderFloat("Spore Speed", &simulationSettings.spore_speed, 0.0f, static_cast<float>(simulationSettings.grid_size) / 2.0);
     ImGui::SliderFloat("Turn Speed", &simulationSettings.turn_speed, 0.0f, 5.0f);
     ImGui::SliderFloat("Decay Speed", &simulationSettings.decay_speed, 0.0f, 10.0f);

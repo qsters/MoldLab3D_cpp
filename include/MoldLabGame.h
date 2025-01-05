@@ -45,18 +45,19 @@ protected:
 
 private:
     GLuint triangleVbo = 0, triangleVao = 0, voxelGridTexture = 0, simulationSettingsBuffer = 0, sporesBuffer = 0, sdfTexBuffer1 = 0, sdfTexBuffer2 = 0;
-    GLuint shaderProgram = 0, drawSporesShaderProgram = 0, moveSporesShaderProgram = 0, decaySporesShaderProgram = 0, jumpFloodInitShaderProgram = 0, jumpFloodStepShaderProgram = 0, clearGridShaderProgram = 0, randomizeSporesShaderProgram = 0;
-    ShaderVariable<int> jfaStepSV;
+    GLuint shaderProgram = 0, drawSporesShaderProgram = 0, moveSporesShaderProgram = 0, decaySporesShaderProgram = 0, jumpFloodInitShaderProgram = 0, jumpFloodStepShaderProgram = 0, clearGridShaderProgram = 0, randomizeSporesShaderProgram = 0, scaleSporesShaderProgram = 0;
+    ShaderVariable<int> jfaStepSV, maxSporeSizeSV;
+    ShaderVariable<float> gridResizeFactorSV;
 
     SimulationData simulationSettings{};
 
     float horizontalAngle = 90.0f; // Rotation angle around the Y-axis
     float verticalAngle = 0.0f;   // Rotation angle around the X-axis
     float orbitRadius = SimulationDefaults::GRID_SIZE * 1.25;    // Distance from the origin
-    float rotationSpeed = 1.0f;   // Speed of rotation
 
     bool useTransparency = true;
     bool wrapGrid = true;
+    bool gridSizeChanged = false;
 
     InputState inputState;
 
@@ -73,7 +74,7 @@ private:
 
     // Update Helpers
     void HandleCameraMovement(float orbitRadius, float deltaTime);
-    void DispatchComputeShaders() const;
+    void DispatchComputeShaders();
     void executeJFA() const;
     void resetSporesAndGrid() const;
 };
