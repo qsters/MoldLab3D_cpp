@@ -109,6 +109,10 @@ void MoldLabGame::initializeShaders() {
     clearGridShaderProgram = CreateShaderProgram({
     {"shaders/clear_grid.glsl", GL_COMPUTE_SHADER, false}
     });
+
+    randomizeSporesShaderProgram = CreateShaderProgram({
+    {"shaders/randomize_spores.glsl", GL_COMPUTE_SHADER, false}
+    });
 }
 
 
@@ -214,7 +218,7 @@ void MoldLabGame::initializeSimulationBuffers() {
 
     glGenBuffers(1, &sporesBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, sporesBuffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sporesSize, spores, GL_DYNAMIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sporesSize, nullptr, GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, SPORE_BUFFER_LOCATION, sporesBuffer); // Binding index 1 for spores
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind
 
@@ -336,6 +340,12 @@ void MoldLabGame::HandleCameraMovement(const float orbitRadius, const float delt
     set_vec4(simulationSettings.camera_position, focusPoint[0] + x, focusPoint[1] + y, focusPoint[2] + z, 0.0);
 }
 
+void MoldLabGame::resetSporesAndGrid() const {
+    DispatchComputeShader(clearGridShaderProgram, GRID_SIZE, GRID_SIZE, GRID_SIZE);
+    DispatchComputeShader(randomizeSporesShaderProgram, SPORE_COUNT, 1, 1);
+}
+
+
 void MoldLabGame::DispatchComputeShaders() const {
     uploadSettingsBuffer(simulationSettingsBuffer, simulationSettings);
 
@@ -417,7 +427,7 @@ void MoldLabGame::renderingStart() {
     simulationSettings.sensor_distance = SPORE_SENSOR_DISTANCE;
     simulationSettings.sensor_angle = SPORE_SENSOR_ANGLE;
 
-    initializeSpores();
+    // initializeSpores();
 
     initializeSimulationBuffers();
 }
@@ -430,7 +440,8 @@ void MoldLabGame::start() {
     inputManager.bindKeyState(GLFW_KEY_UP, &inputState.isUpPressed);
     inputManager.bindKeyState(GLFW_KEY_DOWN, &inputState.isDownPressed);
 
-    DispatchComputeShader(clearGridShaderProgram, GRID_SIZE, GRID_SIZE, GRID_SIZE);
+
+    resetSporesAndGrid();
 }
 
 void MoldLabGame::update(float deltaTime) {
@@ -483,5 +494,10 @@ void MoldLabGame::renderUI() {
             initializeMoveSporesShader(wrapGrid);
         }
     }
+
+    if (ImGui::Button("Randomize Spores")) {
+        resetSporesAndGrid(); // Call the function when the button is pressed
+    }
+
     ImGui::End(); // End the window
 }

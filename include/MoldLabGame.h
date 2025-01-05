@@ -7,7 +7,7 @@
 #include "Spore.h"
 
 constexpr int GRID_SIZE = 500;
-constexpr int SPORE_COUNT = 1000000;
+constexpr int SPORE_COUNT = 1'000'000;
 constexpr float SPORE_SPEED = 10;
 constexpr float SPORE_DECAY = 0.33;
 constexpr float SPORE_SENSOR_DISTANCE = 10.0;
@@ -46,7 +46,7 @@ protected:
 
 private:
     GLuint triangleVbo = 0, triangleVao = 0, voxelGridTexture = 0, simulationSettingsBuffer = 0, sporesBuffer = 0, sdfTexBuffer1 = 0, sdfTexBuffer2 = 0;
-    GLuint shaderProgram = 0, drawSporesShaderProgram = 0, moveSporesShaderProgram = 0, decaySporesShaderProgram = 0, jumpFloodInitShaderProgram = 0, jumpFloodStepShaderProgram = 0, clearGridShaderProgram = 0;
+    GLuint shaderProgram = 0, drawSporesShaderProgram = 0, moveSporesShaderProgram = 0, decaySporesShaderProgram = 0, jumpFloodInitShaderProgram = 0, jumpFloodStepShaderProgram = 0, clearGridShaderProgram = 0, randomizeSporesShaderProgram = 0;
     ShaderVariable<int> jfaStepSV;
 
     // Dynamically allocated to reduce Stack Memory, was causing issues at large values
@@ -80,7 +80,7 @@ private:
     void HandleCameraMovement(float orbitRadius, float deltaTime);
     void DispatchComputeShaders() const;
     void executeJFA() const;
-
+    void resetSporesAndGrid() const;
 };
 
 #endif // MOLDLABGAME_H
