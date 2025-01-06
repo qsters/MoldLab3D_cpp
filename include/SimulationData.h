@@ -13,6 +13,7 @@ struct SimulationData {
     vec4 camera_position; // Must be aligned on 16 bytes!!
     vec4 camera_focus; // Must be aligned on 16 bytes!!
     float delta_time;
+    float grid_resize_factor;
 };
 
 #endif //SIMULATIONDATA_H

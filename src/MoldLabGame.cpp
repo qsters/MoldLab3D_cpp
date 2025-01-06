@@ -133,11 +133,9 @@ void MoldLabGame::initializeShaders() {
 
 void MoldLabGame::initializeUniformVariables() {
     static int jfaStep = simulationSettings.grid_size;
-    static float resizeFactor = 0.0;
     static int maxSporeSize = SimulationDefaults::SPORE_COUNT;
 
     jfaStepSV = ShaderVariable(jumpFloodStepShaderProgram, &jfaStep, "stepSize");
-    gridResizeFactorSV = ShaderVariable(scaleSporesShaderProgram, &resizeFactor, "gridResizeFactor");
     maxSporeSizeSV = ShaderVariable(scaleSporesShaderProgram, &maxSporeSize, "maxSporeSize");
 }
 
@@ -180,8 +178,7 @@ void MoldLabGame::initializeVoxelGridBuffer() {
     // Bind the texture as an image unit for compute shader access
     glBindImageTexture(GRID_TEXTURE_LOCATION, voxelGridTexture, 0, GL_TRUE, 0, GL_READ_WRITE, GL_R32F);
 
-    // Unbind the texture
-    glBindTexture(GL_TEXTURE_3D, 0);
+    glBindTexture(GL_TEXTURE_3D, 0); // Unbind the texture
 }
 
 
@@ -218,7 +215,6 @@ void MoldLabGame::initializeSDFBuffer() {
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
     glBindTexture(GL_TEXTURE_3D, 0);
-
 }
 
 
@@ -295,10 +291,15 @@ void MoldLabGame::HandleCameraMovement(const float orbitRadius, const float delt
     set_vec4(simulationSettings.camera_position, focusPoint[0] + x, focusPoint[1] + y, focusPoint[2] + z, 0.0);
 }
 
-void MoldLabGame::resetSporesAndGrid() const {
+void MoldLabGame::clearGrid() const {
     const int gridSize = simulationSettings.grid_size;
 
     DispatchComputeShader(clearGridShaderProgram, gridSize, gridSize, gridSize);
+}
+
+
+void MoldLabGame::resetSporesAndGrid() const {
+    clearGrid();
     DispatchComputeShader(randomizeSporesShaderProgram, simulationSettings.spore_count, 1, 1);
 }
 
@@ -312,11 +313,18 @@ void MoldLabGame::DispatchComputeShaders() {
         DispatchComputeShader(decaySporesShaderProgram, gridSize, gridSize, gridSize);
 
         DispatchComputeShader(moveSporesShaderProgram, simulationSettings.spore_count, 1, 1);
+
+        DispatchComputeShader(drawSporesShaderProgram, simulationSettings.spore_count, 1, 1);
+    } else {
+        glUseProgram(scaleSporesShaderProgram);
+        maxSporeSizeSV.uploadToShader();
+
+        DispatchComputeShader(scaleSporesShaderProgram, *maxSporeSizeSV.value, 1, 1);
+        clearGrid();
     }
 
     gridSizeChanged = false;
 
-    DispatchComputeShader(drawSporesShaderProgram, simulationSettings.spore_count, 1, 1);
     executeJFA();
 }
 
@@ -434,21 +442,17 @@ void MoldLabGame::renderUI() {
     int previousGridSize = simulationSettings.grid_size;
     if (ImGui::SliderInt("Grid Size", &simulationSettings.grid_size, 10, SimulationDefaults::GRID_SIZE)) {
         if (previousGridSize != simulationSettings.grid_size) {
-            uploadSettingsBuffer(simulationSettingsBuffer, simulationSettings);
+            gridSizeChanged = true;
             float gridResizeFactor = static_cast<float>(simulationSettings.grid_size) / static_cast<float>(previousGridSize);
-
-            simulationSettings.spore_speed = gridResizeFactor;
+            // TODO: Remove this line after testing
+            // gridResizeFactor = 0.5;
+            std::cout << 1.0 / gridResizeFactor << std::endl;
+            simulationSettings.spore_speed *= gridResizeFactor;
             simulationSettings.sensor_distance *= gridResizeFactor;
 
             orbitRadius *= gridResizeFactor;
 
-            *gridResizeFactorSV.value = gridResizeFactor;
-
-            glUseProgram(scaleSporesShaderProgram);
-            maxSporeSizeSV.uploadToShader();
-            gridResizeFactorSV.uploadToShader();
-
-            DispatchComputeShader(scaleSporesShaderProgram, *maxSporeSizeSV.value, 1, 1);
+            simulationSettings.grid_resize_factor = gridResizeFactor;
         }
     }
 

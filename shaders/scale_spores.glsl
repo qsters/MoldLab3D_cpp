@@ -17,7 +17,6 @@ layout(std430, binding = 1) buffer SettingsBuffer {
 };
 
 uniform int maxSporeSize;
-uniform float gridResizeFactor; // Maybe a better name than this would be better?
 
 void main() {
     uint sporeID = gl_GlobalInvocationID.x;
@@ -30,7 +29,7 @@ void main() {
     Spore spore = spores[sporeID];
 
     // Scale the spore position based on the gridRatio
-    spore.position.xyz *= gridResizeFactor;
+    spore.position.xyz *= settings.grid_resize_factor;
 
     // Write the updated spore back to the buffer
     spores[sporeID] = spore;
