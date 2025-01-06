@@ -444,9 +444,6 @@ void MoldLabGame::renderUI() {
         if (previousGridSize != simulationSettings.grid_size) {
             gridSizeChanged = true;
             float gridResizeFactor = static_cast<float>(simulationSettings.grid_size) / static_cast<float>(previousGridSize);
-            // TODO: Remove this line after testing
-            // gridResizeFactor = 0.5;
-            std::cout << 1.0 / gridResizeFactor << std::endl;
             simulationSettings.spore_speed *= gridResizeFactor;
             simulationSettings.sensor_distance *= gridResizeFactor;
 
