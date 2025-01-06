@@ -185,11 +185,6 @@ void MoldLabGame::initializeVoxelGridBuffer() {
 void MoldLabGame::initializeSDFBuffer() {
      int reducedGridSize = simulationSettings.grid_size / simulationSettings.sdf_reduction;
 
-    if  (simulationSettings.grid_size % simulationSettings.sdf_reduction != 0) {
-        // ReSharper disable once CppDFAUnreachableCode
-        std::cerr << "Warning: GRID_SIZE is not evenly divisible by SDF_REDUCTION_FACTOR!" << std::endl;
-    }
-
     glGenTextures(1, &sdfTexBuffer1);
     glBindTexture(GL_TEXTURE_3D, sdfTexBuffer1);
     glTexStorage3D(GL_TEXTURE_3D, 1, GL_RGBA32F, reducedGridSize, reducedGridSize, reducedGridSize);
@@ -441,6 +436,10 @@ void MoldLabGame::renderUI() {
 
     int previousGridSize = simulationSettings.grid_size;
     if (ImGui::SliderInt("Grid Size", &simulationSettings.grid_size, 10, SimulationDefaults::GRID_SIZE)) {
+        // Ensure grid_size is divisible by sdf_reduction
+        int reduction = simulationSettings.sdf_reduction;
+        simulationSettings.grid_size = (simulationSettings.grid_size / reduction) * reduction;
+
         if (previousGridSize != simulationSettings.grid_size) {
             gridSizeChanged = true;
             float gridResizeFactor = static_cast<float>(simulationSettings.grid_size) / static_cast<float>(previousGridSize);
@@ -451,6 +450,11 @@ void MoldLabGame::renderUI() {
 
             simulationSettings.grid_resize_factor = gridResizeFactor;
         }
+    }
+
+    if  (simulationSettings.grid_size % simulationSettings.sdf_reduction != 0) {
+        // ReSharper disable once CppDFAUnreachableCode
+        std::cerr << "Warning: GRID_SIZE is not evenly divisible by SDF_REDUCTION_FACTOR!" << std::endl;
     }
 
     ImGui::SliderFloat("Spore Speed", &simulationSettings.spore_speed, 0.0f, static_cast<float>(simulationSettings.grid_size) / 2.0);
