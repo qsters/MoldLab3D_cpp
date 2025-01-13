@@ -35,6 +35,7 @@ void main() {
     highGridEnd = clamp(highGridEnd, ivec3(0), ivec3(settings.grid_size - 1));
 
 
+
     // Initialize the SDF cell as empty
     vec4 sdfEntry = vec4(-1.0, -1.0, -1.0, 1e6);
 

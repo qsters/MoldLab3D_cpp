@@ -344,7 +344,7 @@ void MoldLabGame::executeJFA() const {
     int iterations = 0;
     int testStopping = 1;
 
-    while (stepSize >= 1) {
+    while (stepSize >= 1 && testStopVale != 0) {
         iterations++;
         glBindImageTexture(SDF_TEXTURE_READ_LOCATION, readTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
         glBindImageTexture(SDF_TEXTURE_WRITE_LOCATION, writeTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
@@ -359,7 +359,7 @@ void MoldLabGame::executeJFA() const {
         stepSize /= 2; // Halve step size
         std::swap(readTexture, writeTexture);
 
-        if (iterations == testStopping) {
+        if (iterations == testStopVale) {
             // break;
         }
     }
@@ -433,7 +433,7 @@ void MoldLabGame::renderUI() {
     // Add sliders for test values or other parameters
     ImGui::Begin("Simulation Settings"); // Begin a window
     ImGui::SliderInt("Spore Count", &simulationSettings.spore_count, 1, SimulationDefaults::SPORE_COUNT);
-
+    ImGui::SliderInt("Test ing", &testStopVale, 0, 10);
     int previousGridSize = simulationSettings.grid_size;
     if (ImGui::SliderInt("Grid Size", &simulationSettings.grid_size, 10, SimulationDefaults::GRID_SIZE)) {
         // Ensure grid_size is divisible by sdf_reduction
