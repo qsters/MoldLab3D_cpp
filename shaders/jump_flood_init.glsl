@@ -26,6 +26,10 @@ void main() {
     int reducedGridSize = settings.grid_size / sdfReductionFactor;
     int reducedIndex = reducedGridPos.x + reducedGridSize * (reducedGridPos.y + reducedGridSize * reducedGridPos.z);
 
+    // Early exit if we're outside the valid range
+    if (any(greaterThanEqual(reducedGridPos, ivec3(reducedGridSize)))) {
+        return;
+    }
 
     // Determine the corresponding high-resolution area to search
     ivec3 highGridStart = reducedGridPos * sdfReductionFactor;
@@ -36,8 +40,8 @@ void main() {
 
 
 
-    // Initialize the SDF cell as empty
-    vec4 sdfEntry = vec4(-1.0, -1.0, -1.0, 1e6);
+    // Initialize the SDF cell with "infinite" distance
+    vec4 sdfEntry = vec4(reducedGridPos * sdfReductionFactor, 1e6);
 
     // Search within the corresponding high-resolution area
     for (int z = highGridStart.z; z <= highGridEnd.z; ++z) {

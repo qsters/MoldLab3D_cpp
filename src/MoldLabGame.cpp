@@ -340,7 +340,12 @@ void MoldLabGame::executeJFA() const {
 
     glUseProgram(jumpFloodStepShaderProgram);
 
-    int stepSize = reducedGridSize / 2;
+    // Start with the largest power of 2 that's less than or equal to reducedGridSize
+    int stepSize = 1;
+    while (stepSize * 2 < reducedGridSize) {
+        stepSize *= 2;
+    }
+
     int iterations = 0;
     int testStopping = 1;
 

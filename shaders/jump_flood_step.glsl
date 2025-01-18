@@ -22,7 +22,12 @@ void main() {
     ivec3 reducedGridPos = ivec3(gl_GlobalInvocationID.xyz);
 
     int sdfReductionFactor = settings.sdf_reduction;
-    int gridSize = settings.grid_size / sdfReductionFactor; // Use reduced grid size if applicable
+    int gridSize = settings.grid_size / sdfReductionFactor;
+    
+    // Early exit if we're outside the valid range
+    if (any(greaterThanEqual(reducedGridPos, ivec3(gridSize)))) {
+        return;
+    }
 
     vec3 worldGridPos = vec3(reducedGridPos * sdfReductionFactor);
 
@@ -33,9 +38,9 @@ void main() {
     // Initialize the output with the current value
     vec4 outputValue = currentValue;
 
-    // Skip if this cell already has w == 0.0
+    // Skip if this cell already has w == 0.0 (it's a seed point)
     if (currentValue.w <= 0.0) {
-        imageStore(writeSDFData, reducedGridPos, currentValue); // Pass the value through unchanged
+        imageStore(writeSDFData, reducedGridPos, outputValue);
         return;
     }
 
@@ -97,6 +102,10 @@ void main() {
         }
     }
 
-    // Write the updated value to the writeSDFData texture
+    // Ensure we always write a valid value
+    if (outputValue.w >= 1e6) {
+        outputValue = vec4(worldGridPos, 1e6); // Use current position as reference if no valid neighbor found
+    }
+
     imageStore(writeSDFData, reducedGridPos, outputValue);
 }
