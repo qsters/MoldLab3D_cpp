@@ -485,6 +485,11 @@ void MoldLabGame::renderUI() {
     if (ImGui::Button("Randomize Spores")) {
         resetSporesAndGrid(); // Call the function when the button is pressed
     }
+    // Add VSync toggle at the top
+    bool currentVSync = GetVsyncStatus();
+    if (ImGui::Checkbox("VSync", &currentVSync)) {
+        SetVsyncStatus(currentVSync);
+    }
 
     ImGui::End(); // End the window
 }
