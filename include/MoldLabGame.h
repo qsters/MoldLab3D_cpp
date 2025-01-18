@@ -7,8 +7,8 @@
 #include "Spore.h"
 
 struct SimulationDefaults {
-    static constexpr int GRID_SIZE = 500;
-    static constexpr int SPORE_COUNT = 1'000'000;
+    static constexpr int GRID_SIZE = 400;
+    static constexpr int SPORE_COUNT = 500'000;
     static constexpr float SPORE_SPEED = 10.0f;
     static constexpr float SPORE_DECAY = 0.33f;
     static constexpr float SPORE_SENSOR_DISTANCE = 10.0f;
@@ -16,6 +16,9 @@ struct SimulationDefaults {
     static constexpr float SPORE_TURN_SPEED = 1.0f;
     static constexpr float SPORE_ROTATION_SPEED = 1.0f;
     static constexpr int SDF_REDUCTION_FACTOR = 2;
+
+    static constexpr float MAX_SPORE_COUNT = 1'000'000;
+    static constexpr float MAX_GRID_SIZE = 750;
 };
 
 

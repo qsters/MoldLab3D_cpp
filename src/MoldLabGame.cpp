@@ -160,7 +160,7 @@ void MoldLabGame::initializeVertexBuffers() {
 }
 
 void MoldLabGame::initializeVoxelGridBuffer() {
-     int voxelGridSize = simulationSettings.grid_size;
+     int voxelGridSize = SimulationDefaults::MAX_GRID_SIZE;
 
     // ** Create Voxel Grid Texture **
     glGenTextures(1, &voxelGridTexture);
@@ -438,10 +438,10 @@ void MoldLabGame::renderUI() {
 
     // Add sliders for test values or other parameters
     ImGui::Begin("Simulation Settings"); // Begin a window
-    ImGui::SliderInt("Spore Count", &simulationSettings.spore_count, 1, SimulationDefaults::SPORE_COUNT);
+    ImGui::SliderInt("Spore Count", &simulationSettings.spore_count, 1, SimulationDefaults::MAX_SPORE_COUNT);
 
     int previousGridSize = simulationSettings.grid_size;
-    if (ImGui::SliderInt("Grid Size", &simulationSettings.grid_size, 10, SimulationDefaults::GRID_SIZE)) {
+    if (ImGui::SliderInt("Grid Size", &simulationSettings.grid_size, 25, SimulationDefaults::MAX_GRID_SIZE)) {
         // Ensure grid_size is divisible by sdf_reduction
         int reduction = simulationSettings.sdf_reduction;
         simulationSettings.grid_size = (simulationSettings.grid_size / reduction) * reduction;
