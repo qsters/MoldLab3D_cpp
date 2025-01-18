@@ -21,7 +21,7 @@ constexpr int SIMULATION_BUFFER_LOCATION = 1;
 // ============================
 // Constructor/Destructor
 // ============================
-void assignDefaultsToSimulationData(SimulationData& data) {
+void assignDefaultsToSimulationData(SimulationData& data, float aspectRatio) {
     data.spore_count = SimulationDefaults::SPORE_COUNT;
     data.grid_size = SimulationDefaults::GRID_SIZE;
     data.sdf_reduction = SimulationDefaults::SDF_REDUCTION_FACTOR;
@@ -30,6 +30,7 @@ void assignDefaultsToSimulationData(SimulationData& data) {
     data.turn_speed = SimulationDefaults::SPORE_TURN_SPEED;
     data.sensor_distance = SimulationDefaults::SPORE_SENSOR_DISTANCE;
     data.sensor_angle = SimulationDefaults::SPORE_SENSOR_ANGLE;
+    data.aspect_ratio = aspectRatio;
 }
 
 MoldLabGame::MoldLabGame(const int width, const int height, const std::string &title)
@@ -46,7 +47,7 @@ MoldLabGame::MoldLabGame(const int width, const int height, const std::string &t
     addShaderDefinition(SPORE_DEFINITION, "include/Spore.h");
 
     // Set the simulation Settings to the Defaults
-    assignDefaultsToSimulationData(simulationSettings);
+    assignDefaultsToSimulationData(simulationSettings,  static_cast<float>(getScreenWidth()) / static_cast<float>(getScreenHeight()));
 }
 
 MoldLabGame::~MoldLabGame() {

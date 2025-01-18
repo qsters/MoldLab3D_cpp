@@ -263,9 +263,13 @@ void main() {
     vec3 right = normalize(cross(worldUp, forward)); // Right vector
     vec3 up = cross(forward, right); // Up vector
 
+    // Adjust UV for non-square aspect ratio
+    vec2 adjustedUV = uv;
+    adjustedUV.x *= settings.aspect_ratio; // Scale the x-coordinate by the aspect ratio
+
     // Ray origin and direction
     vec3 rayOrigin = settings.camera_position.xyz;
-    vec3 rayDirection = normalize(uv.x * right + uv.y * up + forward); // Combine screen-space uv with camera orientation
+    vec3 rayDirection = normalize(adjustedUV.x * right + adjustedUV.y * up + forward); // Combine screen-space uv with camera orientation
 
     vec3 gridMin = vec3(0.0);
     vec3 gridMax = vec3(settings.grid_size - 1);
