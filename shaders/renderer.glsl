@@ -201,14 +201,14 @@ vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
 
 vec3 ray_march_transparency(in vec3 rayOrigin, in vec3 rayDirection) {
     float total_distance_traveled = 0.0;
-    const int NUMBER_OF_STEPS = 700;
+    const int NUMBER_OF_STEPS = settings.grid_size;
     const float MINIMUM_HIT_DISTANCE = .1;
-    const float STEP_MARCH_DISTANCE = 1;
+    const float STEP_MARCH_DISTANCE = settings.sdf_reduction * 0.75;
     // Diagonal of a cube side length * sqrt(3)
     const float MAXIMUM_TRACE_DISTANCE = settings.grid_size * 1.732;
 
     vec3 opacity_accumulator = vec3(0.0); // Initialize as a vec3 to accumulate color
-    float opacity_scaler = 15.0 / float(settings.grid_size);
+    float opacity_scaler = 15.0 / (float(settings.grid_size));
 
     for (int i = 0; i < NUMBER_OF_STEPS; ++i) {
         vec3 current_position = rayOrigin + total_distance_traveled * rayDirection;
@@ -227,7 +227,7 @@ vec3 ray_march_transparency(in vec3 rayOrigin, in vec3 rayDirection) {
         }
 
         float distance_to_closest = map_the_world_transparent(current_position);
-        traveled_this_step = distance_to_closest;
+        traveled_this_step = distance_to_closest * 0.8;
 
         if (distance_to_closest < MINIMUM_HIT_DISTANCE) {
             ivec3 gridCoord = clamp(ivec3(floor(current_position)), ivec3(0), ivec3(settings.grid_size - 1)); // Convert to grid coordinates
@@ -243,7 +243,7 @@ vec3 ray_march_transparency(in vec3 rayOrigin, in vec3 rayDirection) {
         total_distance_traveled += traveled_this_step;
     }
 
-    return vec3(0.0, 0.0, 1.0); // Background color (black)
+    return opacity_accumulator;
 }
 
 bool intersectsAABB(vec3 rayOrigin, vec3 rayDirection, vec3 gridMin, vec3 gridMax, out float tNear) {
