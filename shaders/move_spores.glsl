@@ -165,7 +165,7 @@ void main() {
     spore.orientation = normalizeMatrix(spore.orientation);
 
     // Update the spore's position
-    spore.position = vec4(10., 40., 10.0, 0.0);
+    spore.position = vec4(newPosition, 0.0);
 
     // Write the updated spore back to the buffer
     spores[sporeID] = spore;

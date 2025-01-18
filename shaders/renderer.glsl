@@ -79,7 +79,7 @@ float map_the_world(in vec3 point) {
 
     int sdfReductionFactor = settings.sdf_reduction;
 
-    ivec3 searchPoint = ivec3(round(center / float(sdfReductionFactor)));;
+    ivec3 searchPoint = center / sdfReductionFactor;
     vec4 sdfValue = imageLoad(sdfData, searchPoint);
 
     float cameraSDF = distance_from_sphere(point, settings.camera_position.xyz, float(settings.grid_size) / 4.0);
@@ -89,7 +89,7 @@ float map_the_world(in vec3 point) {
         // subtract a bit off to make sure we do not overshoot
         result = sdfValue.w - sdfReductionFactor / 2.0;
         result = min(result, settings.grid_size / 2.0); // make sure it jumps no more than half the grid at one point to account for sdf values not set
-        result = max(result, -cameraSDF); // Negate the area around the camera
+        result = max(result, -cameraSDF);
         return result;
     }
 
@@ -98,7 +98,6 @@ float map_the_world(in vec3 point) {
         for (int y = max(center.y - searchRadius, 0); y <= min(center.y + searchRadius, settings.grid_size - 1); y++) {
             for (int z = max(center.z - searchRadius, 0); z <= min(center.z + searchRadius, settings.grid_size - 1); z++) {
                 float voxelValue =  imageLoad(voxelData, ivec3(x,y,z)).x;
-//                float voxelValue =  (1.0 - (imageLoad(sdfData, ivec3(x,y,z) / ivec3(sdfReductionFactor)).w / settings.grid_size)) / 3.0;
 
                 // Skip zero-sized cubes
                 if (voxelValue <= 0.01) continue;
@@ -119,68 +118,6 @@ float map_the_world(in vec3 point) {
     result = min(searchRadius, result);
     result = max(result, -cameraSDF);
     return result; // Return the minimum distance for the scene
-}
-
-vec2 map_the_world(in vec3 point, bool debug) {
-    float result = 1e6; // Start with a very large value (infinite distance)
-    const int searchRadius = 2; // Local cube radius (adjustable)
-
-    // Convert point to grid coordinates
-    ivec3 center = clamp(ivec3(floor(point)), ivec3(0), ivec3(settings.grid_size - 1));
-//    ivec3 center = ivec3(floor(point));
-
-    int sdfReductionFactor = settings.sdf_reduction;
-
-    ivec3 searchPoint = clamp(ivec3(round(center / float(sdfReductionFactor))),
-                              ivec3(0), ivec3(settings.grid_size / sdfReductionFactor - 1));
-    vec4 sdfValue = imageLoad(sdfData, searchPoint);
-
-    float cameraSDF = distance_from_sphere(point, settings.camera_position.xyz, float(settings.grid_size) / 4.0);
-    float searchBoundary = max(sdfReductionFactor, searchRadius);
-    float sdfDistance = clamp(sdfValue.w, 0.0, float(settings.grid_size));
-
-//    if (sdfDistance >= 1e6) {
-//        return vec2(settings.grid_size / 2.0);
-//    }
-//
-//    // skip this if the closest cube is less than the max betwen the search radius and the reduction factor times by the diagonal of the cube to make sure it will account for diagonal movement.
-//    if (sdfDistance > searchBoundary * 1.8) {
-//        // subtract a bit off to make sure we do not overshoot
-//        result = sdfDistance - searchBoundary / 2.0;
-//        result = min(result, settings.grid_size / 2.0); // make sure it jumps no more than half the grid at one point to account for sdf values not set
-////        result = max(result, -cameraSDF); // Negate the area around the camera
-//        return vec2(result, 1.0);
-//    }
-
-    // Iterate only within a cube around the ray's current position
-    for (int x = max(center.x - searchRadius, 0); x <= min(center.x + searchRadius, settings.grid_size - 1); x++) {
-        for (int y = max(center.y - searchRadius, 0); y <= min(center.y + searchRadius, settings.grid_size - 1); y++) {
-            for (int z = max(center.z - searchRadius, 0); z <= min(center.z + searchRadius, settings.grid_size - 1); z++) {
-//                float voxelValue =  imageLoad(voxelData, ivec3(x,y,z)).x;
-                                float voxelValue =  (1.0 - (imageLoad(sdfData, ivec3(x,y,z) / ivec3(sdfReductionFactor)).w / settings.grid_size)) / 3.0;
-//                if (x == 0 || z == 0) {
-//                    voxelValue = 1.0;
-//                }
-                if
-                // Skip zero-sized cubes
-                if (voxelValue <= 0.01) continue;
-
-                // Calculate the grid position
-                vec3 gridPoint = vec3(float(x), float(y), float(z));
-
-                // Calculate the distance to the cube at this grid point
-                float cube = distance_from_cube(point, gridPoint, voxelValue);
-
-                // Combine distances using smooth_min for blending
-                result = smooth_min(result, cube, 0.55);
-            }
-        }
-    }
-
-    // Moves search radius if nothing has been encountered.
-    result = min(searchRadius, result);
-    result = max(result, -cameraSDF);
-    return vec2(result, 0.0); // Return the minimum distance for the scene
 }
 
 float map_the_world_transparent(in vec3 point) {
@@ -236,23 +173,24 @@ vec3 calculage_lighting(in vec3 rayOrigin, in vec3 current_position) {
 
 // Perform ray marching to find intersections with the scene
 vec3 ray_march(in vec3 rayOrigin, in vec3 rayDirection) {
-    vec2 total_distance_traveled = vec2(0.0);
+    float total_distance_traveled = 0.0;
     const int NUMBER_OF_STEPS = 500;
     const float MINIMUM_HIT_DISTANCE = 0.1;
     // Diagonal of a cube side length * sqrt(3)
     const float MAXIMUM_TRACE_DISTANCE = settings.grid_size * 1.732;
 
     for (int i = 0; i < NUMBER_OF_STEPS; ++i) {
-        vec3 current_position = rayOrigin + total_distance_traveled.x * rayDirection;
+        vec3 current_position = rayOrigin + total_distance_traveled * rayDirection;
 
-        if (distance_from_cube(current_position, settings.camera_focus.xyz, settings.grid_size) > 1) {
-            return vec3(total_distance_traveled.y / i);
+        // If traveled too far, or exited the bounds, return red (for now)
+        if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE || distance_from_cube(current_position, settings.camera_focus.xyz, settings.grid_size) > 1) {
+            return vec3(i / float(NUMBER_OF_STEPS), 0.0, 0.0);
         }
 
-        vec2 distance_to_closest = map_the_world(current_position, true);
+        float distance_to_closest = map_the_world(current_position);
 //        return vec3(distance_to_closest);
 
-        if (distance_to_closest.x < MINIMUM_HIT_DISTANCE) {
+        if (distance_to_closest < MINIMUM_HIT_DISTANCE) {
             return calculage_lighting(rayOrigin, current_position);
         }
 
@@ -276,6 +214,11 @@ vec3 ray_march_transparency(in vec3 rayOrigin, in vec3 rayDirection) {
         vec3 current_position = rayOrigin + total_distance_traveled * rayDirection;
 
         float traveled_this_step = 0.0;
+
+        // If traveled too far, return red (for now)
+        if (total_distance_traveled > MAXIMUM_TRACE_DISTANCE) {
+            return vec3(i / float(NUMBER_OF_STEPS), 0.0, 0.0);
+        }
 
         // If exited the bounds, or opacity is full, return accumulated color
         if (distance_from_cube(current_position, settings.camera_focus.xyz, settings.grid_size) > 1 ||
@@ -331,7 +274,7 @@ void main() {
     float tNear;
     // Cull rays that don't intersect the AABB
     if (!intersectsAABB(rayOrigin, rayDirection, gridMin - offset, gridMax + offset, tNear)) {
-        fragmentColor = vec4(1.0, 0.0, 0.0, 1.0); // Background color
+        fragmentColor = vec4(0.0, 0.0, 0.0, 1.0); // Background color
         return;
     }
 

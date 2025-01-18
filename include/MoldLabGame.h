@@ -7,15 +7,15 @@
 #include "Spore.h"
 
 struct SimulationDefaults {
-    static constexpr int GRID_SIZE = 54;
-    static constexpr int SPORE_COUNT = 1;
+    static constexpr int GRID_SIZE = 500;
+    static constexpr int SPORE_COUNT = 1'000'000;
     static constexpr float SPORE_SPEED = 10.0f;
     static constexpr float SPORE_DECAY = 0.33f;
     static constexpr float SPORE_SENSOR_DISTANCE = 10.0f;
     static constexpr float SPORE_SENSOR_ANGLE = M_PI / 2.0f;
     static constexpr float SPORE_TURN_SPEED = 1.0f;
     static constexpr float SPORE_ROTATION_SPEED = 1.0f;
-    static constexpr int SDF_REDUCTION_FACTOR = 1;
+    static constexpr int SDF_REDUCTION_FACTOR = 2;
 };
 
 
@@ -54,14 +54,11 @@ private:
     float verticalAngle = 0.0f;   // Rotation angle around the X-axis
     float orbitRadius = SimulationDefaults::GRID_SIZE * 1.25;    // Distance from the origin
 
-    bool useTransparency = false;
+    bool useTransparency = true;
     bool wrapGrid = true;
     bool gridSizeChanged = false;
 
     InputState inputState;
-
-    // TODO: remove this test
-    int testStopVale = 1;
 
     // Initialization Functions
     void initializeRenderShader(bool useTransparency);
