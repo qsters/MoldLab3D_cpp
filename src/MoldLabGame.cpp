@@ -289,7 +289,6 @@ void MoldLabGame::HandleCameraMovement(const float orbitRadius, const float delt
 
 void MoldLabGame::clearGrid() const {
     const int gridSize = simulationSettings.grid_size;
-
     DispatchComputeShader(clearGridShaderProgram, gridSize, gridSize, gridSize);
 }
 
@@ -312,11 +311,7 @@ void MoldLabGame::DispatchComputeShaders() {
 
         DispatchComputeShader(drawSporesShaderProgram, simulationSettings.spore_count, 1, 1);
     } else {
-        glUseProgram(scaleSporesShaderProgram);
-        maxSporeSizeSV.uploadToShader();
-
-        DispatchComputeShader(scaleSporesShaderProgram, *maxSporeSizeSV.value, 1, 1);
-        clearGrid();
+        resetSporesAndGrid();
     }
 
     gridSizeChanged = false;
@@ -433,21 +428,61 @@ void MoldLabGame::render() {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
+bool SliderFloatWithTooltip(const char* label, const char* sliderId, float* value, float min, float max, const char* tooltip) {
+    // Display the slider with the provided ID
+    bool valueChanged = ImGui::SliderFloat(sliderId, value, min, max);
+
+    // Place the slider on the same line
+    ImGui::SameLine();
+
+    // Display the label for the slider
+    ImGui::Text("%s", label);
+    if (ImGui::IsItemHovered() && tooltip) {
+        ImGui::SetTooltip("%s", tooltip); // Show tooltip if provided
+    }
+
+
+    return valueChanged;
+}
+
+bool SliderIntWithTooltip(const char* label, const char* sliderId, int* value, int min, int max, const char* tooltip) {
+    // Display the slider with the provided ID
+    bool valueChanged = ImGui::SliderInt(sliderId, value, min, max);
+
+    // Place the slider on the same line
+    ImGui::SameLine();
+
+    // Display the label for the slider
+    ImGui::Text("%s", label);
+    if (ImGui::IsItemHovered() && tooltip) {
+        ImGui::SetTooltip("%s", tooltip); // Show tooltip if provided
+    }
+
+
+    return valueChanged;
+}
+
+
 void MoldLabGame::renderUI() {
     ImGui::GetStyle().Alpha = 0.8f;
 
     // Add sliders for test values or other parameters
     ImGui::Begin("Simulation Settings"); // Begin a window
-    ImGui::SliderInt("Spore Count", &simulationSettings.spore_count, 1, SimulationDefaults::MAX_SPORE_COUNT);
+
+    SliderIntWithTooltip("Spore Count", "##SporeCountSlider", &simulationSettings.spore_count, 1, SimulationDefaults::MAX_SPORE_COUNT, "Number of spores in the simulation.");
 
     int previousGridSize = simulationSettings.grid_size;
-    if (ImGui::SliderInt("Grid Size", &simulationSettings.grid_size, 25, SimulationDefaults::MAX_GRID_SIZE)) {
+    gridSizeChanged = SliderIntWithTooltip("Grid Size", "##GridSizeSlider", &simulationSettings.grid_size, 25,
+                         SimulationDefaults::MAX_GRID_SIZE,
+                         "The number of voxels that make up one side length of the cube grid. "
+                         "\nNote: This will Clear the current voxels and randomize spore positions. Will also scale grid-size dependent settings with it");
+
+    if (gridSizeChanged) {
         // Ensure grid_size is divisible by sdf_reduction
         int reduction = simulationSettings.sdf_reduction;
         simulationSettings.grid_size = (simulationSettings.grid_size / reduction) * reduction;
 
         if (previousGridSize != simulationSettings.grid_size) {
-            gridSizeChanged = true;
             float gridResizeFactor = static_cast<float>(simulationSettings.grid_size) / static_cast<float>(previousGridSize);
             simulationSettings.spore_speed *= gridResizeFactor;
             simulationSettings.sensor_distance *= gridResizeFactor;
@@ -462,12 +497,20 @@ void MoldLabGame::renderUI() {
         // ReSharper disable once CppDFAUnreachableCode
         std::cerr << "Warning: GRID_SIZE is not evenly divisible by SDF_REDUCTION_FACTOR!" << std::endl;
     }
+    SliderFloatWithTooltip("Spore Speed", "##SporeSpeedSlider", &simulationSettings.spore_speed, 0.0f, static_cast<float>(simulationSettings.grid_size) / 2.0f, "Sets the speed of the spores. Voxels per second.");
+    SliderFloatWithTooltip("Turn Speed", "##TurnSpeedSlider", &simulationSettings.turn_speed, 0.0f, 5.0f, "Turn speed of spores. Rotations per second.");
+    SliderFloatWithTooltip("Decay Speed", "##DecaySpeedSlider", &simulationSettings.decay_speed, 0.0f, 10.0f, "Decay speed of spores. 1/x seconds to fully decay.");
+    SliderFloatWithTooltip("Sensor Distance", "##SensorDistanceSlider", &simulationSettings.sensor_distance, 0.0f, static_cast<float>(simulationSettings.grid_size) / 2.0f, "Sets the distance that the spore can see. In Voxels.");
+    SliderFloatWithTooltip("Sensor Angle", "##SensorAngleSlider", &simulationSettings.sensor_angle, 0.0f, M_PI, "Sets the angle that the spores see. In Radians. 0 is directly on the forward sensor, PI being directly behind it.");
 
-    ImGui::SliderFloat("Spore Speed", &simulationSettings.spore_speed, 0.0f, static_cast<float>(simulationSettings.grid_size) / 2.0);
-    ImGui::SliderFloat("Turn Speed", &simulationSettings.turn_speed, 0.0f, 5.0f);
-    ImGui::SliderFloat("Decay Speed", &simulationSettings.decay_speed, 0.0f, 10.0f);
-    ImGui::SliderFloat("Sensor Distance", &simulationSettings.sensor_distance, 0.0f, static_cast<float>(simulationSettings.grid_size) / 2.0);
-    ImGui::SliderFloat("Sensor Angle", &simulationSettings.sensor_angle, 0.0f, M_PI);
+    if (ImGui::Button("Randomize Spores")) {
+        resetSporesAndGrid(); // Call the function when the button is pressed
+    }
+
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("%s", "Randomizes Spore positions and resets Grid Values"); // Show tooltip if provided
+    }
+
 
     bool previousTransparentState = useTransparency; // Track the previous state
     if (ImGui::Checkbox("Use Transparency", &useTransparency)) {
@@ -476,6 +519,7 @@ void MoldLabGame::renderUI() {
         }
     }
 
+
     bool previousWrappingState = wrapGrid; // Track the previous state
     if (ImGui::Checkbox("Wrap Grid", &wrapGrid)) {
         if (wrapGrid != previousWrappingState) {
@@ -483,9 +527,7 @@ void MoldLabGame::renderUI() {
         }
     }
 
-    if (ImGui::Button("Randomize Spores")) {
-        resetSporesAndGrid(); // Call the function when the button is pressed
-    }
+
     // Add VSync toggle at the top
     bool currentVSync = GetVsyncStatus();
     if (ImGui::Checkbox("VSync", &currentVSync)) {
