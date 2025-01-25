@@ -43,6 +43,3 @@ find_package(OpenGL REQUIRED)
 # Manually link GLFW (if find_package does not work in MSYS2)
 # Use static library for GLFW
 target_link_libraries(MoldLab3D OpenGL::GL C:/msys64/mingw64/lib/libglfw3.a)
-
-# Optionally link dynamic library instead:
-# target_link_libraries(MoldLab3D OpenGL::GL C:/msys64/mingw64/lib/libglfw3.dll.a)
