@@ -18,7 +18,7 @@ struct SimulationDefaults {
     static constexpr int SDF_REDUCTION_FACTOR = 2;
 
     static constexpr float MAX_SPORE_COUNT = 1'000'000;
-    static constexpr float MAX_GRID_SIZE = 750;
+    static constexpr float MAX_GRID_SIZE = 500;
 };
 
 
