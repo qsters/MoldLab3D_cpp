@@ -391,6 +391,11 @@ void MoldLabGame::renderingStart() {
 }
 
 void MoldLabGame::start() {
+    ImGuiIO& io = ImGui::GetIO();
+    // Load the default font at a larger size (e.g., 24 pixels)
+    io.Fonts->AddFontFromFileTTF("Fonts/ProggyClean.ttf", 15.0f);
+    io.Fonts->AddFontFromFileTTF("Fonts/Roboto-Bold.ttf", 25.0f);
+
     inputManager.bindKeyState(GLFW_KEY_D, &inputState.isDPressed);
     inputManager.bindKeyState(GLFW_KEY_A, &inputState.isAPressed);
     inputManager.bindKeyState(GLFW_KEY_LEFT, &inputState.isLeftPressed);
@@ -469,6 +474,27 @@ void MoldLabGame::renderUI() {
     // Add sliders for test values or other parameters
     ImGui::Begin("Simulation Settings"); // Begin a window
 
+    ImGuiIO& io = ImGui::GetIO();
+
+    ImGui::Separator(); // Add a line separator for clarity
+    ImGui::PushFont(io.Fonts->Fonts[1]); // Assuming the larger/bold font is at index 1
+    ImGui::Text("Instructions:");
+    ImGui::PopFont();
+    ImGui::Spacing(); // Add vertical space
+
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.6f, 1.0f)); // Light orange text for emphasis
+    ImGui::TextWrapped("Arrow Keys: Move the camera");
+    ImGui::TextWrapped("A: Zoom in");
+    ImGui::TextWrapped("D: Zoom Out");
+    ImGui::PopStyleColor();
+
+    ImGui::Spacing();
+    ImGui::Separator();
+
+    ImGui::PushFont(io.Fonts->Fonts[1]); // Assuming the larger/bold font is at index 1
+    ImGui::Text("Variables:");
+    ImGui::PopFont();
+
     SliderIntWithTooltip("Spore Count", "##SporeCountSlider", &simulationSettings.spore_count, 1, SimulationDefaults::MAX_SPORE_COUNT, "Number of spores in the simulation.");
 
     int previousGridSize = simulationSettings.grid_size;
@@ -502,6 +528,9 @@ void MoldLabGame::renderUI() {
     SliderFloatWithTooltip("Decay Speed", "##DecaySpeedSlider", &simulationSettings.decay_speed, 0.0f, 10.0f, "Decay speed of spores. 1/x seconds to fully decay.");
     SliderFloatWithTooltip("Sensor Distance", "##SensorDistanceSlider", &simulationSettings.sensor_distance, 0.0f, static_cast<float>(simulationSettings.grid_size) / 2.0f, "Sets the distance that the spore can see. In Voxels.");
     SliderFloatWithTooltip("Sensor Angle", "##SensorAngleSlider", &simulationSettings.sensor_angle, 0.0f, M_PI, "Sets the angle that the spores see. In Radians. 0 is directly on the forward sensor, PI being directly behind it.");
+
+    ImGui::Spacing();
+    ImGui::Separator();
 
     if (ImGui::Button("Randomize Spores")) {
         resetSporesAndGrid(); // Call the function when the button is pressed
