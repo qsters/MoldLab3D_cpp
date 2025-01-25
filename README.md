@@ -3,7 +3,7 @@
 ## Project Overview
 The 3D slime simulation is a 3d Version of the [MoldLagb](https://store.steampowered.com/app/2454710/MoldLab/), a game I released on steam. An emergent behavior agent based simulation. Inspired by [Sebastian Lagues video](https://www.youtube.com/watch?v=X-iSQQgOd1A).
 
-![BurstingSporesGif](gifs/BurstingSpores.gif)
+<img src="gifs\BurstingSpores.gif">
 
 ## Features
 - **Ray-Marched Rendering**: High-quality visualizations of slime mold behavior using ray-marching techniques. Both tranparent and opaque.
