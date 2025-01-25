@@ -468,6 +468,7 @@ bool SliderIntWithTooltip(const char* label, const char* sliderId, int* value, i
 }
 
 
+
 void MoldLabGame::renderUI() {
     ImGui::GetStyle().Alpha = 0.8f;
 
@@ -564,4 +565,17 @@ void MoldLabGame::renderUI() {
     }
 
     ImGui::End(); // End the window
+
+    const float DISTANCE = 10.0f; // Distance from the edges
+    ImVec2 windowPos = ImVec2(ImGui::GetIO().DisplaySize.x - DISTANCE, ImGui::GetIO().DisplaySize.y - DISTANCE);
+    ImVec2 windowPivot = ImVec2(1.0f, 1.0f); // Bottom-right corner as pivot
+
+    ImGui::SetNextWindowPos(windowPos, ImGuiCond_Always, windowPivot);
+    ImGui::SetNextWindowBgAlpha(0.3f); // Transparent background
+
+    if (ImGui::Begin("Framerate Overlay", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
+                                                     ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav)) {
+        ImGui::Text("Framerate: %.1f FPS", ImGui::GetIO().Framerate);
+                                                     }
+    ImGui::End();
 }
